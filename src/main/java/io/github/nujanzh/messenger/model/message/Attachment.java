@@ -1,9 +1,7 @@
-package io.github.nujanzh.messenger.model;
+package io.github.nujanzh.messenger.model.message;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Generated;
-import org.hibernate.generator.EventType;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
@@ -16,13 +14,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString
-@Table(
-        name = "message_status",
-        uniqueConstraints =
-                @UniqueConstraint(
-                        name = "uniq_message_status_message_id_user_id",
-                        columnNames = {"message_id", "user_id"}))
-public class MessageStatus {
+@Table(name = "attachments")
+public class Attachment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -33,23 +26,23 @@ public class MessageStatus {
     @JoinColumn(
             name = "message_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_message_status_message_id"))
+            foreignKey = @ForeignKey(name = "fk_attachments_message_id"))
     private Message message;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "user_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_message_status_user_id"))
-    private User user;
+    @Column(name = "file_name", nullable = false)
+    private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private DeliveryStatus status;
+    @Column(name = "file_url", nullable = false, length = 2083)
+    private String url;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
-    @Generated(event = {EventType.INSERT, EventType.UPDATE})
-    private Instant updatedAt;
+    @Column(name = "file_type", nullable = false, length = 20)
+    private String type;
+
+    @Column(name = "file_size", nullable = false)
+    private Long size;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private Instant createdAt;
 
     @Override
     public final boolean equals(Object o) {
@@ -64,8 +57,8 @@ public class MessageStatus {
                         ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass()
                         : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        MessageStatus messageStatus = (MessageStatus) o;
-        return getId() != null && Objects.equals(getId(), messageStatus.getId());
+        Attachment attachment = (Attachment) o;
+        return getId() != null && Objects.equals(getId(), attachment.getId());
     }
 
     @Override

@@ -1,4 +1,4 @@
-package io.github.nujanzh.messenger.model;
+package io.github.nujanzh.messenger.model.message;
 
 public enum DeliveryStatus {
     SENT,

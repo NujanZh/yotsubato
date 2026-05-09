@@ -1,5 +1,9 @@
-package io.github.nujanzh.messenger.model;
+package io.github.nujanzh.messenger.model.user;
 
+import io.github.nujanzh.messenger.model.message.Message;
+import io.github.nujanzh.messenger.model.message.MessageStatus;
+import io.github.nujanzh.messenger.model.room.Room;
+import io.github.nujanzh.messenger.model.room.RoomMember;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
