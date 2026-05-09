@@ -4,8 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
-import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -15,35 +16,57 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints = {
+            @UniqueConstraint(name = "uniq_users_username", columnNames = "username"),
+            @UniqueConstraint(name = "uniq_users_email", columnNames = "email")
+        })
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @ToString.Exclude
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(updatable = false, nullable = false)
     private UUID id;
 
+    @Column(nullable = false, length = 50)
     private String username;
+
+    @Column(nullable = false, length = 254)
     private String email;
 
-    @Column(name = "password_hash")
+    @Column(name = "password_hash", nullable = false)
     @ToString.Exclude
     private String password;
 
-    @Column(name = "avatar_url")
+    @Column(name = "avatar_url", length = 2083)
     private String avatarUrl;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status;
 
     @Column(name = "last_seen")
-    private Timestamp lastSeen;
+    private Instant lastSeen;
 
+    @OneToMany(mappedBy = "createdBy", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<Room> rooms = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<RoomMember> memberships = new ArrayList<>();
+
+    @OneToMany(mappedBy = "sender", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<Message> messages = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    private List<MessageStatus> statuses = new ArrayList<>();
+
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Instant createdAt;
-
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = Instant.now();
-    }
 
     @Override
     public final boolean equals(Object o) {

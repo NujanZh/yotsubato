@@ -5,8 +5,6 @@ import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -17,60 +15,38 @@ import java.util.UUID;
 @Setter
 @ToString
 @Table(
-        name = "messages",
-        indexes = @Index(name = "idx_messages_room_sent", columnList = "room_id, sent_at"))
-public class Message {
+        name = "room_members",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uniq_room_members_room_id_user_id",
+                        columnNames = {"room_id", "user_id"}))
+public class RoomMember {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, updatable = false)
+    @Column(updatable = false, nullable = false)
     private UUID id;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "sender_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_messages_sender_id"))
-    private User sender;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "room_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_messages_room_id"))
+            foreignKey = @ForeignKey(name = "fk_room_members_room_id"))
     private Room room;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reply_to", foreignKey = @ForeignKey(name = "fk_messages_reply_to"))
-    @ToString.Exclude
-    private Message replyTo;
-
-    @OneToMany(mappedBy = "replyTo", fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private List<Message> replies = new ArrayList<>();
-
-    @OneToMany(mappedBy = "message", fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private List<MessageStatus> statuses = new ArrayList<>();
-
-    @OneToMany(mappedBy = "message", fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private List<Attachment> attachments = new ArrayList<>();
-
-    @Column(columnDefinition = "TEXT")
-    private String content;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_room_members_user_id"))
+    private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MessageType type;
+    private MemberRole role;
 
-    @Column(name = "edited_at")
-    private Instant editedAt;
-
-    private boolean deleted;
-
-    @Column(name = "sent_at", insertable = false, updatable = false)
-    private Instant sentAt;
+    @Column(name = "joined_at", insertable = false, updatable = false)
+    private Instant joinedAt;
 
     @Override
     public final boolean equals(Object o) {
@@ -85,8 +61,8 @@ public class Message {
                         ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass()
                         : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        Message message = (Message) o;
-        return getId() != null && Objects.equals(getId(), message.getId());
+        RoomMember roomMember = (RoomMember) o;
+        return getId() != null && Objects.equals(getId(), roomMember.getId());
     }
 
     @Override

@@ -38,6 +38,8 @@ services:
       start_period: 30s
     networks:
       - backend
+    ports:
+      - "${DB_PORT}:3306"
     restart: unless-stopped
   redis:
     image: 'redis:8.6-alpine'

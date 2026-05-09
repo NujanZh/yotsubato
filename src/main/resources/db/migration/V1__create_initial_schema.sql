@@ -1,17 +1,13 @@
 CREATE TABLE users
 (
-    id            UUID         NOT NULL DEFAULT (uuid_v7()) PRIMARY KEY,
+    id            UUID         NOT NULL PRIMARY KEY,
     username      VARCHAR(50)  NOT NULL,
     email         VARCHAR(254) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     avatar_url    VARCHAR(2083),
     status        VARCHAR(20)  NOT NULL DEFAULT 'OFFLINE',
     last_seen     DATETIME(3),
-    created_at    DATETIME(3) GENERATED ALWAYS AS (
-        FROM_UNIXTIME(
-                CONV(LEFT(HEX(id), 12), 16, 10) / 1000
-        )
-        ) VIRTUAL,
+    created_at    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT chk_users_status CHECK (status IN ('ONLINE', 'OFFLINE', 'AWAY')),
     CONSTRAINT uniq_users_username UNIQUE (username),
     CONSTRAINT uniq_users_email UNIQUE (email)
@@ -19,16 +15,12 @@ CREATE TABLE users
 
 CREATE TABLE rooms
 (
-    id          UUID         NOT NULL DEFAULT (uuid_v7()) PRIMARY KEY,
+    id          UUID         NOT NULL PRIMARY KEY,
     name        VARCHAR(100) NOT NULL,
     type        VARCHAR(20)  NOT NULL DEFAULT 'PUBLIC',
     created_by  UUID         NOT NULL,
     description VARCHAR(255),
-    created_at  DATETIME(3) GENERATED ALWAYS AS (
-        FROM_UNIXTIME(
-                CONV(LEFT(HEX(id), 12), 16, 10) / 1000
-        )
-        ) VIRTUAL,
+    created_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT chk_rooms_type CHECK (type IN ('PUBLIC', 'PRIVATE')),
     CONSTRAINT fk_rooms_created_by
         FOREIGN KEY (created_by)
@@ -39,15 +31,11 @@ CREATE TABLE rooms
 
 CREATE TABLE room_members
 (
-    id        UUID        NOT NULL DEFAULT (uuid_v7()) PRIMARY KEY,
+    id        UUID        NOT NULL PRIMARY KEY,
     room_id   UUID        NOT NULL,
     user_id   UUID        NOT NULL,
     role      VARCHAR(20) NOT NULL DEFAULT 'MEMBER',
-    joined_at DATETIME(3) GENERATED ALWAYS AS (
-        FROM_UNIXTIME(
-                CONV(LEFT(HEX(id), 12), 16, 10) / 1000
-        )
-        ) VIRTUAL,
+    joined_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT chk_room_members_role CHECK (role IN ('ADMIN', 'MEMBER')),
     CONSTRAINT uniq_room_members_room_id_user_id UNIQUE (room_id, user_id),
     CONSTRAINT fk_room_member_room_id
@@ -64,7 +52,7 @@ CREATE TABLE room_members
 
 CREATE TABLE messages
 (
-    id        UUID        NOT NULL DEFAULT (uuid_v7()) PRIMARY KEY,
+    id        UUID        NOT NULL PRIMARY KEY,
     room_id   UUID        NOT NULL,
     sender_id UUID        NOT NULL,
     reply_to  UUID,
@@ -72,11 +60,7 @@ CREATE TABLE messages
     type      VARCHAR(20) NOT NULL DEFAULT 'TEXT',
     edited_at DATETIME(3),
     deleted   BOOLEAN     NOT NULL DEFAULT FALSE,
-    sent_at   DATETIME(3) GENERATED ALWAYS AS (
-        FROM_UNIXTIME(
-                CONV(LEFT(HEX(id), 12), 16, 10) / 1000
-        )
-        ) VIRTUAL,
+    sent_at   DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT chk_messages_type CHECK (type IN ('TEXT', 'IMAGE', 'SYSTEM', 'FILE')),
     CONSTRAINT fk_messages_room_id
         FOREIGN KEY (room_id)
@@ -97,15 +81,11 @@ CREATE TABLE messages
 
 CREATE TABLE message_status
 (
-    id         UUID        NOT NULL DEFAULT (uuid_v7()) PRIMARY KEY,
+    id         UUID        NOT NULL PRIMARY KEY,
     message_id UUID        NOT NULL,
     user_id    UUID        NOT NULL,
     status     VARCHAR(20) NOT NULL DEFAULT 'SENT',
-    updated_at DATETIME(3) GENERATED ALWAYS AS (
-        FROM_UNIXTIME(
-                CONV(LEFT(HEX(id), 12), 16, 10) / 1000
-        )
-        ) VIRTUAL,
+    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     CONSTRAINT chk_message_status_status CHECK (status IN ('READ', 'SENT', 'DELIVERED')),
     CONSTRAINT uniq_message_status_message_id_user_id UNIQUE (message_id, user_id),
     CONSTRAINT fk_message_status_user_id
@@ -122,17 +102,13 @@ CREATE TABLE message_status
 
 CREATE TABLE attachments
 (
-    id         UUID          NOT NULL DEFAULT (uuid_v7()) PRIMARY KEY,
+    id         UUID          NOT NULL PRIMARY KEY,
     message_id UUID          NOT NULL,
     file_name  VARCHAR(255)  NOT NULL,
     file_url   VARCHAR(2083) NOT NULL,
     file_type  VARCHAR(20)   NOT NULL,
     file_size  BIGINT        NOT NULL,
-    created_at DATETIME(3) GENERATED ALWAYS AS (
-        FROM_UNIXTIME(
-                CONV(LEFT(HEX(id), 12), 16, 10) / 1000
-        )
-        ) VIRTUAL,
+    created_at DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT fk_attachments_message_id
         FOREIGN KEY (message_id)
             REFERENCES messages (id)
