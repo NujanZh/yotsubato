@@ -12,6 +12,8 @@ services:
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      SPRING_JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      SPRING_JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
     depends_on:
       mariadb:
         condition: service_healthy

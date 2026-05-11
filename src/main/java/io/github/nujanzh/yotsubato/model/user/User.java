@@ -1,9 +1,9 @@
-package io.github.nujanzh.messenger.model.user;
+package io.github.nujanzh.yotsubato.model.user;
 
-import io.github.nujanzh.messenger.model.message.Message;
-import io.github.nujanzh.messenger.model.message.MessageStatus;
-import io.github.nujanzh.messenger.model.room.Room;
-import io.github.nujanzh.messenger.model.room.RoomMember;
+import io.github.nujanzh.yotsubato.model.message.Message;
+import io.github.nujanzh.yotsubato.model.message.MessageStatus;
+import io.github.nujanzh.yotsubato.model.room.Room;
+import io.github.nujanzh.yotsubato.model.room.RoomMember;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
@@ -41,7 +41,7 @@ public class User {
 
     @Column(name = "password_hash", nullable = false)
     @ToString.Exclude
-    private String password;
+    private String passwordHash;
 
     @Column(name = "avatar_url", length = 2083)
     private String avatarUrl;

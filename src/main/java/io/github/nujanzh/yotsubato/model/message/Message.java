@@ -1,9 +1,10 @@
-package io.github.nujanzh.messenger.model.message;
+package io.github.nujanzh.yotsubato.model.message;
 
-import io.github.nujanzh.messenger.model.room.Room;
-import io.github.nujanzh.messenger.model.user.User;
+import io.github.nujanzh.yotsubato.model.room.Room;
+import io.github.nujanzh.yotsubato.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @Table(
         name = "messages",
         indexes = @Index(name = "idx_messages_room_sent", columnList = "room_id, sent_at"))
+@SQLRestriction("deleted = false")
 public class Message {
 
     @Id

@@ -1,1 +1,1 @@
-rootProject.name = "realtime-messenger"
+rootProject.name = "yotsubato"

@@ -1,0 +1,16 @@
+logging:
+  level:
+    root: WARN
+    io.github.nujanzh.yotsubato: INFO
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+spring:
+  web:
+    error:
+      include-stacktrace: never
+      include-message: never

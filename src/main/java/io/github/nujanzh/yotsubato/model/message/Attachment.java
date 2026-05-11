@@ -1,6 +1,5 @@
-package io.github.nujanzh.messenger.model.room;
+package io.github.nujanzh.yotsubato.model.message;
 
-import io.github.nujanzh.messenger.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
@@ -15,39 +14,35 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString
-@Table(
-        name = "room_members",
-        uniqueConstraints =
-                @UniqueConstraint(
-                        name = "uniq_room_members_room_id_user_id",
-                        columnNames = {"room_id", "user_id"}))
-public class RoomMember {
+@Table(name = "attachments")
+public class Attachment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(updatable = false, nullable = false)
+    @Column(nullable = false, updatable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
-            name = "room_id",
+            name = "message_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_room_members_room_id"))
-    private Room room;
+            foreignKey = @ForeignKey(name = "fk_attachments_message_id"))
+    private Message message;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "user_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_room_members_user_id"))
-    private User user;
+    @Column(name = "file_name", nullable = false)
+    private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MemberRole role;
+    @Column(name = "file_url", nullable = false, length = 2083)
+    private String url;
 
-    @Column(name = "joined_at", insertable = false, updatable = false)
-    private Instant joinedAt;
+    @Column(name = "file_type", nullable = false, length = 20)
+    private String type;
+
+    @Column(name = "file_size", nullable = false)
+    private Long size;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private Instant createdAt;
 
     @Override
     public final boolean equals(Object o) {
@@ -62,8 +57,8 @@ public class RoomMember {
                         ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass()
                         : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        RoomMember roomMember = (RoomMember) o;
-        return getId() != null && Objects.equals(getId(), roomMember.getId());
+        Attachment attachment = (Attachment) o;
+        return getId() != null && Objects.equals(getId(), attachment.getId());
     }
 
     @Override

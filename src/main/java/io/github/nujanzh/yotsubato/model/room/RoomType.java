@@ -1,4 +1,4 @@
-package io.github.nujanzh.messenger.model.room;
+package io.github.nujanzh.yotsubato.model.room;
 
 public enum RoomType {
     PUBLIC,

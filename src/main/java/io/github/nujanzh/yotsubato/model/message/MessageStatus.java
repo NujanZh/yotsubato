@@ -1,14 +1,13 @@
-package io.github.nujanzh.messenger.model.room;
+package io.github.nujanzh.yotsubato.model.message;
 
-import io.github.nujanzh.messenger.model.message.Message;
-import io.github.nujanzh.messenger.model.user.User;
+import io.github.nujanzh.yotsubato.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -18,40 +17,40 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString
-@Table(name = "rooms")
-public class Room {
+@Table(
+        name = "message_status",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uniq_message_status_message_id_user_id",
+                        columnNames = {"message_id", "user_id"}))
+public class MessageStatus {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(updatable = false, nullable = false)
+    @Column(nullable = false, updatable = false)
     private UUID id;
-
-    @Column(nullable = false, length = 100)
-    private String name;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RoomType type;
-
-    private String description;
-
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private Instant createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
-            name = "created_by",
+            name = "message_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_rooms_created_by"))
-    private User createdBy;
+            foreignKey = @ForeignKey(name = "fk_message_status_message_id"))
+    private Message message;
 
-    @OneToMany(mappedBy = "room", fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private List<RoomMember> members = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "user_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_message_status_user_id"))
+    private User user;
 
-    @OneToMany(mappedBy = "room", fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private List<Message> messages = new ArrayList<>();
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DeliveryStatus status;
+
+    @Column(name = "updated_at", insertable = false, updatable = false)
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    private Instant updatedAt;
 
     @Override
     public final boolean equals(Object o) {
@@ -66,8 +65,8 @@ public class Room {
                         ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass()
                         : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        Room room = (Room) o;
-        return getId() != null && Objects.equals(getId(), room.getId());
+        MessageStatus messageStatus = (MessageStatus) o;
+        return getId() != null && Objects.equals(getId(), messageStatus.getId());
     }
 
     @Override

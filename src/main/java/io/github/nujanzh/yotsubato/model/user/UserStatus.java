@@ -1,4 +1,4 @@
-package io.github.nujanzh.messenger.model.user;
+package io.github.nujanzh.yotsubato.model.user;
 
 public enum UserStatus {
     ONLINE,

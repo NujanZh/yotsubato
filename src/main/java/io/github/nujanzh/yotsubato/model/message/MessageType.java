@@ -1,4 +1,4 @@
-package io.github.nujanzh.messenger.model.message;
+package io.github.nujanzh.yotsubato.model.message;
 
 public enum MessageType {
     TEXT,
