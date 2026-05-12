@@ -11,7 +11,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
       SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
       SPRING_JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
       SPRING_JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
     depends_on:
@@ -57,6 +57,8 @@ services:
       - redis-data:/data
     networks:
       - backend
+    ports:
+      - "${REDIS_PORT}:6379"
     restart: unless-stopped
 volumes:
   mariadb-data:

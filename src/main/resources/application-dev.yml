@@ -1,3 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: localhost
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+
 logging:
   file:
     name: logs/application.log
@@ -5,3 +16,7 @@ logging:
     io.github.nujanzh.yotsubato: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
+
+jwt:
+  private-key: ${JWT_PRIVATE_KEY}
+  public-key: ${JWT_PUBLIC_KEY}

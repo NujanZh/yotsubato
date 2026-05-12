@@ -10,4 +10,5 @@ public record JwtProperties(
         Resource privateKey,
         Resource publicKey,
         Duration accessTokenTtl,
-        Duration refreshTokenTtl) {}
+        Duration refreshTokenTtl,
+        String issuer) {}

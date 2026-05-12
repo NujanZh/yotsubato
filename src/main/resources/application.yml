@@ -2,6 +2,10 @@ spring:
   application:
     name: yotsubato
 
+  docker:
+    compose:
+      enabled: false
+
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -19,7 +23,6 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MariaDBDialect
         format_sql: true
         jdbc:
           time_zone: UTC
@@ -90,7 +93,8 @@ logging:
       max-history: 30
       total-size-cap: 1GB
 jwt:
-  private-key: ${JWT_PRIVATE_KEY}
-  public-key: ${JWT_PUBLIC_KEY}
+  private-key: ${SPRING_JWT_PRIVATE_KEY}
+  public-key: ${SPRING_JWT_PUBLIC_KEY}
   access-token-ttl: 15m
   refresh-token-ttl: 7d
+  issuer: yotsubato
