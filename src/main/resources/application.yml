@@ -81,17 +81,10 @@ management:
 logging:
   level:
     root: INFO
-    io.github.nujanzh.yotsubato: DEBUG
+    io.github.nujanzh.yotsubato: INFO
     org.springframework.web: INFO
     org.hibernate.SQL: WARN
     org.flywaydb: INFO
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-  logback:
-    rollingpolicy:
-      max-file-size: 10MB
-      max-history: 30
-      total-size-cap: 1GB
 jwt:
   private-key: ${SPRING_JWT_PRIVATE_KEY}
   public-key: ${SPRING_JWT_PUBLIC_KEY}
