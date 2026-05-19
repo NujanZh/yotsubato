@@ -36,6 +36,7 @@ spotless {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-micrometer-tracing-brave")
     implementation("io.micrometer:micrometer-tracing-bridge-brave")
     implementation("io.zipkin.reporter2:zipkin-reporter-brave")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")

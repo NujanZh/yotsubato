@@ -5,8 +5,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -33,9 +34,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ProblemDetail handleAuthenticationException(
             AuthenticationException ex, HttpServletRequest request) {
-        log.info("Invalid credentials: {}", ex.getMessage());
+        log.info("Authentication failed: {}", ex.getMessage());
         return ProblemDetailFactory.build(
-                HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid credentials", request);
+                HttpStatus.UNAUTHORIZED, "Unauthorized", "Authentication required", request);
     }
 
     @ExceptionHandler(JwtValidationException.class)
@@ -46,12 +47,46 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid authentication", request);
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDeniedException(
+            AccessDeniedException ex, HttpServletRequest request) {
+        log.debug("Access denied: {}", ex.getMessage());
+        return ProblemDetailFactory.build(
+                HttpStatus.FORBIDDEN, "Forbidden", "Access denied", request);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ProblemDetail handleBadCredentialsException(
+            BadCredentialsException ex, HttpServletRequest request) {
+        log.debug("Invalid credentials: {}", ex.getMessage());
+        return ProblemDetailFactory.build(
+                HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid credentials", request);
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     public ProblemDetail handleConstraintViolationException(
             ConstraintViolationException ex, HttpServletRequest request) {
+
         log.debug("Request parameter validation failed: {}", ex.getMessage());
-        return ProblemDetailFactory.build(
-                HttpStatus.BAD_REQUEST, "Validation failed", "Request validation failed", request);
+
+        ProblemDetail problemDetail =
+                ProblemDetailFactory.build(
+                        HttpStatus.BAD_REQUEST,
+                        "Validation failed",
+                        "Request validation failed",
+                        request);
+
+        List<ValidationError> errors =
+                ex.getConstraintViolations().stream()
+                        .map(
+                                cv ->
+                                        new ValidationError(
+                                                cv.getPropertyPath().toString(), cv.getMessage()))
+                        .toList();
+
+        problemDetail.setProperty("errors", errors);
+
+        return problemDetail;
     }
 
     @Override
@@ -61,14 +96,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatusCode status,
             WebRequest request) {
 
-        HttpServletRequest httpRequest = ((ServletWebRequest) request).getRequest();
+        log.debug("Request body validation failed: {}", ex.getMessage());
 
         ProblemDetail problemDetail =
                 ProblemDetailFactory.build(
                         HttpStatus.BAD_REQUEST,
                         "Validation failed",
                         "One or more fields are invalid.",
-                        httpRequest);
+                        toHttpRequest(request));
 
         List<ValidationError> errors =
                 ex.getBindingResult().getFieldErrors().stream()
@@ -77,7 +112,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         problemDetail.setProperty("errors", errors);
 
-        log.debug("Request body validation failed: {}", ex.getMessage());
         return new ResponseEntity<>(problemDetail, HttpStatus.BAD_REQUEST);
     }
 
@@ -90,9 +124,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             Object[] detailMessageArguments,
             WebRequest request) {
 
-        HttpServletRequest httpRequest = ((ServletWebRequest) request).getRequest();
-
         return ProblemDetailFactory.build(
-                HttpStatus.valueOf(status.value()), defaultDetail, httpRequest);
+                HttpStatus.valueOf(status.value()), defaultDetail, toHttpRequest(request));
+    }
+
+    private static HttpServletRequest toHttpRequest(WebRequest request) {
+        return ((ServletWebRequest) request).getRequest();
     }
 }

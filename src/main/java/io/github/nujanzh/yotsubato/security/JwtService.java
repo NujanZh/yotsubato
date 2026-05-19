@@ -78,26 +78,25 @@ public class JwtService {
                             .parseSignedClaims(token);
 
             UUID userId = parseSubject(claimsJws.getPayload());
+            // TODO: JTI for blocklist
             // String tokenId = claimsJws.getPayload().getId();
             Instant expiresAt = claimsJws.getPayload().getExpiration().toInstant();
 
             return new AuthenticatedPrincipal(userId, expiresAt);
-        } catch (ExpiredJwtException e) {
-            log.debug("Token expired", e);
-            throw new JwtValidationException("Token expired", e);
-        } catch (SignatureException e) {
-            log.warn("Invalid signature", e);
-            throw new JwtValidationException("Invalid signature", e);
-        } catch (UnsupportedJwtException e) {
-            throw new JwtValidationException("Unsupported token", e);
-        } catch (MalformedJwtException e) {
-            throw new JwtValidationException("Malformed token", e);
-        } catch (IncorrectClaimException e) {
-            throw new JwtValidationException("Wrong issuer", e);
-        } catch (JwtException e) {
-            throw new JwtValidationException("Invalid token", e);
-        } catch (IllegalArgumentException e) {
-            throw new JwtValidationException("Empty token", e);
+        } catch (ExpiredJwtException ex) {
+            throw new JwtValidationException("Token expired", ex);
+        } catch (SignatureException ex) {
+            throw new JwtValidationException("Invalid signature", ex);
+        } catch (UnsupportedJwtException ex) {
+            throw new JwtValidationException("Unsupported token", ex);
+        } catch (MalformedJwtException ex) {
+            throw new JwtValidationException("Malformed token", ex);
+        } catch (IncorrectClaimException ex) {
+            throw new JwtValidationException("Wrong issuer", ex);
+        } catch (JwtException ex) {
+            throw new JwtValidationException("Invalid token", ex);
+        } catch (IllegalArgumentException ex) {
+            throw new JwtValidationException("Empty token", ex);
         }
     }
 
