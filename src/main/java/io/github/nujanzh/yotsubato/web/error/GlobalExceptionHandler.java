@@ -1,6 +1,9 @@
 package io.github.nujanzh.yotsubato.web.error;
 
+import io.github.nujanzh.yotsubato.exception.InvalidRefreshTokenException;
 import io.github.nujanzh.yotsubato.exception.JwtValidationException;
+import io.github.nujanzh.yotsubato.exception.UserAlreadyExistsException;
+import io.github.nujanzh.yotsubato.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +48,30 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.debug("Invalid token: {}", ex.getMessage());
         return ProblemDetailFactory.build(
                 HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid authentication", request);
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ProblemDetail handleUserAlreadyExistsException(
+            UserAlreadyExistsException ex, HttpServletRequest request) {
+        log.warn("User already exists: {}", ex.getMessage());
+        return ProblemDetailFactory.build(
+                HttpStatus.CONFLICT, "Conflict", "Registration failed", request);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ProblemDetail handleUserNotFoundException(
+            UserNotFoundException ex, HttpServletRequest request) {
+        log.debug("User not found: {}", ex.getMessage());
+        return ProblemDetailFactory.build(
+                HttpStatus.NOT_FOUND, "Not Found", "User not found", request);
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ProblemDetail handleInvalidRefreshTokenException(
+            InvalidRefreshTokenException ex, HttpServletRequest request) {
+        log.debug("Invalid refresh token: {}", ex.getMessage());
+        return ProblemDetailFactory.build(
+                HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid refresh token", request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

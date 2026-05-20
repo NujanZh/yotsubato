@@ -1,22 +1,24 @@
-package io.github.nujanzh.yotsubato.security;
+package io.github.nujanzh.yotsubato.security.jwt;
 
 import io.github.nujanzh.yotsubato.exception.JwtValidationException;
+import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 @Component
@@ -24,17 +26,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private static final String AUTHORIZATION = "Authorization";
     private static final String TOKEN_PREFIX = "Bearer ";
-    // Maybe change /actuator/ to /actuator/health/
-    private static final Set<String> PUBLIC_PREFIXES =
-            Set.of("/auth/", "/api-docs/", "/swagger-ui/", "/actuator/");
+    private final RequestMatcher publicEndPoints;
 
     private final JwtService jwtService;
     private final HandlerExceptionResolver resolver;
 
     public JwtAuthFilter(
             JwtService jwtService,
+            RequestMatcher publicEndPoints,
             @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
         this.jwtService = jwtService;
+        this.publicEndPoints = publicEndPoints;
         this.resolver = resolver;
     }
 
@@ -70,8 +72,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return PUBLIC_PREFIXES.stream().anyMatch(path::startsWith);
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        return publicEndPoints.matches(request);
     }
 }

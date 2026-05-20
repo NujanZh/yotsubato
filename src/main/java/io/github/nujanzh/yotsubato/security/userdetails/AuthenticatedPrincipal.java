@@ -1,4 +1,4 @@
-package io.github.nujanzh.yotsubato.security;
+package io.github.nujanzh.yotsubato.security.userdetails;
 
 import java.time.Instant;
 import java.util.UUID;

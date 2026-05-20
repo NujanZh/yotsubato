@@ -1,4 +1,4 @@
-package io.github.nujanzh.yotsubato.security;
+package io.github.nujanzh.yotsubato.security.userdetails;
 
 import io.github.nujanzh.yotsubato.model.user.User;
 import org.springframework.security.core.GrantedAuthority;

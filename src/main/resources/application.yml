@@ -77,6 +77,6 @@ logging:
 jwt:
   private-key: ${SPRING_JWT_PRIVATE_KEY}
   public-key: ${SPRING_JWT_PUBLIC_KEY}
-  access-token-ttl: 15m
-  refresh-token-ttl: 7d
+  access-token-ttl: PT15M
+  refresh-token-ttl: P7D
   issuer: yotsubato
