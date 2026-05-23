@@ -1,7 +1,5 @@
 package io.github.nujanzh.yotsubato.security.jwt;
 
-import io.github.nujanzh.yotsubato.config.JwtProperties;
-import io.github.nujanzh.yotsubato.exception.JwtValidationException;
 import io.github.nujanzh.yotsubato.model.user.User;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.jsonwebtoken.*;
@@ -9,7 +7,6 @@ import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.security.converter.RsaKeyConverters;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

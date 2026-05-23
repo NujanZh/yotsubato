@@ -1,6 +1,5 @@
 package io.github.nujanzh.yotsubato.security.jwt;
 
-import io.github.nujanzh.yotsubato.exception.JwtValidationException;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,8 +23,6 @@ import java.util.List;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private static final String AUTHORIZATION = "Authorization";
-    private static final String TOKEN_PREFIX = "Bearer ";
     private final RequestMatcher publicEndPoints;
 
     private final JwtService jwtService;
@@ -45,9 +42,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String authHeader = request.getHeader(AUTHORIZATION);
+        String authHeader = request.getHeader(BearerAuthConstants.AUTHORIZATION_HEADER);
 
-        if (authHeader == null || !authHeader.startsWith(TOKEN_PREFIX)) {
+        if (authHeader == null || !authHeader.startsWith(BearerAuthConstants.BEARER_PREFIX)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -55,7 +52,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         AuthenticatedPrincipal principal;
 
         try {
-            final String token = authHeader.substring(TOKEN_PREFIX.length());
+            String token = authHeader.substring(BearerAuthConstants.BEARER_PREFIX.length());
             principal = jwtService.parseAndValidate(token);
         } catch (JwtValidationException ex) {
             log.debug("JWT validation failed: {}", ex.getMessage());

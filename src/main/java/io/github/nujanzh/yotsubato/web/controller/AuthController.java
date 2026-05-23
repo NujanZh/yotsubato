@@ -1,10 +1,10 @@
-package io.github.nujanzh.yotsubato.controller;
+package io.github.nujanzh.yotsubato.web.controller;
 
 import io.github.nujanzh.yotsubato.dto.auth.AuthResponse;
 import io.github.nujanzh.yotsubato.dto.auth.LoginRequest;
 import io.github.nujanzh.yotsubato.dto.auth.RefreshRequest;
 import io.github.nujanzh.yotsubato.dto.auth.RegisterRequest;
-import io.github.nujanzh.yotsubato.service.AuthService;
+import io.github.nujanzh.yotsubato.web.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

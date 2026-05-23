@@ -1,6 +1,6 @@
 package io.github.nujanzh.yotsubato.security;
 
-import io.github.nujanzh.yotsubato.config.JwtProperties;
+import io.github.nujanzh.yotsubato.security.jwt.JwtProperties;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +28,11 @@ public class RedisRefreshTokenService {
 
     public Optional<UUID> lookup(String token) {
         String value = redisTemplate.opsForValue().get(key(token));
+        return Optional.ofNullable(value).map(UUID::fromString);
+    }
+
+    public Optional<UUID> deleteAndReturnUserId(String token) {
+        String value = redisTemplate.opsForValue().getAndDelete(key(token));
         return Optional.ofNullable(value).map(UUID::fromString);
     }
 

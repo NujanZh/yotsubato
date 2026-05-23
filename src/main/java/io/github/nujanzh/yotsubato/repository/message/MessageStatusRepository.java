@@ -1,4 +1,4 @@
-package io.github.nujanzh.yotsubato.repository;
+package io.github.nujanzh.yotsubato.repository.message;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

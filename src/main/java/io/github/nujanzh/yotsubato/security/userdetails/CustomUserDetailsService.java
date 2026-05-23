@@ -1,7 +1,7 @@
 package io.github.nujanzh.yotsubato.security.userdetails;
 
 import io.github.nujanzh.yotsubato.model.user.User;
-import io.github.nujanzh.yotsubato.repository.UserRepository;
+import io.github.nujanzh.yotsubato.repository.user.UserRepository;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

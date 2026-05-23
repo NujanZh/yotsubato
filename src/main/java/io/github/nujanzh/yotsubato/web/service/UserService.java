@@ -1,11 +1,10 @@
-package io.github.nujanzh.yotsubato.service;
+package io.github.nujanzh.yotsubato.web.service;
 
-import io.github.nujanzh.yotsubato.dto.auth.RegisterRequest;
 import io.github.nujanzh.yotsubato.exception.UserAlreadyExistsException;
 import io.github.nujanzh.yotsubato.exception.UserNotFoundException;
 import io.github.nujanzh.yotsubato.model.user.User;
 import io.github.nujanzh.yotsubato.model.user.UserStatus;
-import io.github.nujanzh.yotsubato.repository.UserRepository;
+import io.github.nujanzh.yotsubato.repository.user.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

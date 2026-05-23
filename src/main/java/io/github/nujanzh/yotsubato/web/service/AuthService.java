@@ -1,4 +1,4 @@
-package io.github.nujanzh.yotsubato.service;
+package io.github.nujanzh.yotsubato.web.service;
 
 import io.github.nujanzh.yotsubato.dto.auth.AuthResponse;
 import io.github.nujanzh.yotsubato.dto.auth.LoginRequest;
@@ -8,7 +8,6 @@ import io.github.nujanzh.yotsubato.mapper.UserMapper;
 import io.github.nujanzh.yotsubato.model.user.User;
 import io.github.nujanzh.yotsubato.security.RedisRefreshTokenService;
 import io.github.nujanzh.yotsubato.security.jwt.JwtService;
-import io.github.nujanzh.yotsubato.security.userdetails.CustomUserDetails;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -39,6 +38,7 @@ public class AuthService {
         return issueTokens(user);
     }
 
+    // had a DB roundtrip here
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password()));
@@ -47,15 +47,13 @@ public class AuthService {
         return issueTokens(user);
     }
 
-    // what if we deleted token but failed to store new token?
     public AuthResponse refresh(String oldRefreshToken) {
         UUID userId =
                 refreshTokenService
-                        .lookup(oldRefreshToken)
+                        .deleteAndReturnUserId(oldRefreshToken)
                         .orElseThrow(
                                 () -> new InvalidRefreshTokenException("Invalid refresh token"));
 
-        refreshTokenService.delete(oldRefreshToken);
         User user = userService.getById(userId);
         return issueTokens(user);
     }

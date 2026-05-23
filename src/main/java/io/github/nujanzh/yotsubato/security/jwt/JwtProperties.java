@@ -1,4 +1,4 @@
-package io.github.nujanzh.yotsubato.config;
+package io.github.nujanzh.yotsubato.security.jwt;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.io.Resource;

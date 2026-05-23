@@ -1,7 +1,7 @@
 package io.github.nujanzh.yotsubato.web.error;
 
 import io.github.nujanzh.yotsubato.exception.InvalidRefreshTokenException;
-import io.github.nujanzh.yotsubato.exception.JwtValidationException;
+import io.github.nujanzh.yotsubato.security.jwt.JwtValidationException;
 import io.github.nujanzh.yotsubato.exception.UserAlreadyExistsException;
 import io.github.nujanzh.yotsubato.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ProblemDetail handleAuthenticationException(
             AuthenticationException ex, HttpServletRequest request) {
-        log.info("Authentication failed: {}", ex.getMessage());
+        log.warn("Authentication failed: {}", ex.getMessage());
         return ProblemDetailFactory.build(
                 HttpStatus.UNAUTHORIZED, "Unauthorized", "Authentication required", request);
     }
@@ -45,7 +45,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(JwtValidationException.class)
     public ProblemDetail handleJwtValidationException(
             JwtValidationException ex, HttpServletRequest request) {
-        log.debug("Invalid token: {}", ex.getMessage());
+        log.warn("Invalid token: {}", ex.getMessage());
         return ProblemDetailFactory.build(
                 HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid authentication", request);
     }
@@ -69,7 +69,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(InvalidRefreshTokenException.class)
     public ProblemDetail handleInvalidRefreshTokenException(
             InvalidRefreshTokenException ex, HttpServletRequest request) {
-        log.debug("Invalid refresh token: {}", ex.getMessage());
+        log.warn("Invalid refresh token: {}", ex.getMessage());
         return ProblemDetailFactory.build(
                 HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid refresh token", request);
     }
@@ -77,7 +77,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ProblemDetail handleAccessDeniedException(
             AccessDeniedException ex, HttpServletRequest request) {
-        log.debug("Access denied: {}", ex.getMessage());
+        log.warn("Access denied: {}", ex.getMessage());
         return ProblemDetailFactory.build(
                 HttpStatus.FORBIDDEN, "Forbidden", "Access denied", request);
     }
@@ -85,7 +85,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ProblemDetail handleBadCredentialsException(
             BadCredentialsException ex, HttpServletRequest request) {
-        log.debug("Invalid credentials: {}", ex.getMessage());
+        log.warn("Invalid credentials: {}", ex.getMessage());
         return ProblemDetailFactory.build(
                 HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid credentials", request);
     }

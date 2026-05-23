@@ -18,6 +18,7 @@ public class RequestMatcherConfig {
                 factory.matcher("/auth/**"),
                 factory.matcher("/swagger-ui/**"),
                 factory.matcher("/api-docs/**"),
-                factory.matcher("/actuator/health"));
+                factory.matcher("/actuator/health"),
+                factory.matcher("/ws/**"));
     }
 }

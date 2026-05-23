@@ -1,4 +1,4 @@
-package io.github.nujanzh.yotsubato.repository;
+package io.github.nujanzh.yotsubato.repository.user;
 
 import io.github.nujanzh.yotsubato.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
