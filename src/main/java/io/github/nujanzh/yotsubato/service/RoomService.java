@@ -1,0 +1,102 @@
+package io.github.nujanzh.yotsubato.service;
+
+import io.github.nujanzh.yotsubato.dto.room.DmResult;
+import io.github.nujanzh.yotsubato.dto.room.RoomResponse;
+import io.github.nujanzh.yotsubato.mapper.RoomMapper;
+import io.github.nujanzh.yotsubato.model.room.MemberRole;
+import io.github.nujanzh.yotsubato.model.room.Room;
+import io.github.nujanzh.yotsubato.model.room.RoomMember;
+import io.github.nujanzh.yotsubato.model.room.RoomType;
+import io.github.nujanzh.yotsubato.model.user.User;
+import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
+import io.github.nujanzh.yotsubato.repository.room.RoomRepository;
+import io.github.nujanzh.yotsubato.web.service.UserService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+
+@Service
+public class RoomService {
+
+    private final RoomRepository roomRepository;
+    private final UserService userService;
+    private final RoomMemberRepository roomMemberRepository;
+
+    public RoomService(
+            RoomRepository roomRepository,
+            UserService userService,
+            RoomMemberRepository roomMemberRepository) {
+        this.roomRepository = roomRepository;
+        this.userService = userService;
+        this.roomMemberRepository = roomMemberRepository;
+    }
+
+    @Transactional
+    public RoomResponse createRoom(
+            UUID creatorId,
+            String name,
+            RoomType type,
+            String description,
+            List<UUID> initialMemberIds) {
+
+        if (type == RoomType.DIRECT) {
+            throw new IllegalArgumentException("Direct room must have exactly one other member");
+        }
+
+        Set<UUID> uniqueMemberIds = new LinkedHashSet<>(initialMemberIds);
+        uniqueMemberIds.remove(creatorId);
+
+        List<User> initialMembers = userService.getAllByIdsOrThrow(uniqueMemberIds);
+
+        User creator = userService.getById(creatorId);
+
+        Room room = new Room();
+        room.setName(name);
+        room.setType(type);
+        room.setDescription(description);
+        room.setCreatedBy(creator);
+        roomRepository.save(room);
+
+        List<RoomMember> members = new ArrayList<>();
+        members.add(RoomMember.of(room, creator, MemberRole.ADMIN));
+
+        initialMembers.stream()
+                .map(user -> RoomMember.of(room, user, MemberRole.MEMBER))
+                .forEach(members::add);
+
+        List<RoomMember> savedMembers = roomMemberRepository.saveAll(members);
+        return RoomMapper.mapToRoomResponse(room, savedMembers);
+    }
+
+    @Transactional
+    public DmResult getOrCreateDm(UUID callerId, UUID otherUserId) {
+        if (callerId.equals(otherUserId)) {
+            throw new IllegalArgumentException("Cannot create DM with self");
+        }
+
+        Optional<Room> room = roomRepository.findDmBetween(callerId, otherUserId, RoomType.DIRECT);
+
+        if (room.isPresent()) {
+            List<RoomMember> members = roomMemberRepository.findByRoomId(room.get().getId());
+            RoomResponse roomResponse = RoomMapper.mapToRoomResponse(room.get(), members);
+            return new DmResult(roomResponse, false);
+        }
+
+        User caller = userService.getById(callerId);
+        User otherUser = userService.getById(otherUserId);
+
+        Room newRoom = new Room();
+        newRoom.setType(RoomType.DIRECT);
+        newRoom.setCreatedBy(caller);
+        roomRepository.save(newRoom);
+
+        List<RoomMember> saved =
+                roomMemberRepository.saveAll(
+                        List.of(
+                                RoomMember.of(newRoom, caller, MemberRole.MEMBER),
+                                RoomMember.of(newRoom, otherUser, MemberRole.MEMBER)));
+
+        return new DmResult(RoomMapper.mapToRoomResponse(newRoom, saved), true);
+    }
+}

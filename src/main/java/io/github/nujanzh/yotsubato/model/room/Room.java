@@ -26,7 +26,7 @@ public class Room {
     @Column(updatable = false, nullable = false)
     private UUID id;
 
-    @Column(nullable = false, length = 100)
+    @Column(length = 100)
     private String name;
 
     @Enumerated(EnumType.STRING)

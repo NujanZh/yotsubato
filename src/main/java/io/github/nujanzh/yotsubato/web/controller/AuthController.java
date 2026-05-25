@@ -6,10 +6,8 @@ import io.github.nujanzh.yotsubato.dto.auth.RefreshRequest;
 import io.github.nujanzh.yotsubato.dto.auth.RegisterRequest;
 import io.github.nujanzh.yotsubato.web.service.AuthService;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -21,6 +19,7 @@ public class AuthController {
         this.authService = authService;
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/register")
     public AuthResponse register(@RequestBody @Valid RegisterRequest request) {
         return authService.register(request);

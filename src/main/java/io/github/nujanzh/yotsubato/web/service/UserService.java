@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -59,5 +61,20 @@ public class UserService {
         return userRepository
                 .findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found: " + id));
+    }
+
+    public List<User> getAllByIds(Collection<UUID> ids) {
+        return userRepository.findAllById(ids);
+    }
+
+    public List<User> getAllByIdsOrThrow(Collection<UUID> ids) {
+        List<User> users = userRepository.findAllById(ids);
+
+        if (ids.size() != users.size()) {
+            throw new IllegalArgumentException(
+                    "One or more member IDs are invalid or do not exist");
+        }
+
+        return users;
     }
 }

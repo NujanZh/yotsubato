@@ -49,6 +49,14 @@ public class RoomMember {
     @Column(name = "joined_at", insertable = false, updatable = false)
     private Instant joinedAt;
 
+    public static RoomMember of(Room room, User user, MemberRole role) {
+        RoomMember roomMember = new RoomMember();
+        roomMember.setRoom(room);
+        roomMember.setUser(user);
+        roomMember.setRole(role);
+        return roomMember;
+    }
+
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;

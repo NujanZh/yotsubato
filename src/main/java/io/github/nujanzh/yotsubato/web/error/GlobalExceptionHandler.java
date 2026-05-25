@@ -1,5 +1,6 @@
 package io.github.nujanzh.yotsubato.web.error;
 
+import io.github.nujanzh.yotsubato.exception.InvalidMemberException;
 import io.github.nujanzh.yotsubato.exception.InvalidRefreshTokenException;
 import io.github.nujanzh.yotsubato.security.jwt.JwtValidationException;
 import io.github.nujanzh.yotsubato.exception.UserAlreadyExistsException;
@@ -88,6 +89,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("Invalid credentials: {}", ex.getMessage());
         return ProblemDetailFactory.build(
                 HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid credentials", request);
+    }
+
+    @ExceptionHandler(InvalidMemberException.class)
+    public ProblemDetail handleInvalidMemberException(
+            InvalidMemberException ex, HttpServletRequest request) {
+        log.warn("Invalid member: {}", ex.getMessage());
+        return ProblemDetailFactory.build(
+                HttpStatus.BAD_REQUEST, "Invalid member", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleIllegalArgumentException(
+            IllegalArgumentException ex, HttpServletRequest request) {
+        log.warn("Invalid argument: {}", ex.getMessage());
+        return ProblemDetailFactory.build(
+                HttpStatus.BAD_REQUEST, "Invalid argument", ex.getMessage(), request);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
