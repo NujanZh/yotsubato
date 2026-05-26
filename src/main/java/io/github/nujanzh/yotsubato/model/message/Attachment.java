@@ -27,6 +27,7 @@ public class Attachment {
             name = "message_id",
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_attachments_message_id"))
+    @ToString.Exclude
     private Message message;
 
     @Column(name = "file_name", nullable = false)

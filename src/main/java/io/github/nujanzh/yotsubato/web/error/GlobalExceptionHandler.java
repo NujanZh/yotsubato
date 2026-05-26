@@ -1,10 +1,7 @@
 package io.github.nujanzh.yotsubato.web.error;
 
-import io.github.nujanzh.yotsubato.exception.InvalidMemberException;
-import io.github.nujanzh.yotsubato.exception.InvalidRefreshTokenException;
+import io.github.nujanzh.yotsubato.exception.*;
 import io.github.nujanzh.yotsubato.security.jwt.JwtValidationException;
-import io.github.nujanzh.yotsubato.exception.UserAlreadyExistsException;
-import io.github.nujanzh.yotsubato.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -59,12 +56,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 HttpStatus.CONFLICT, "Conflict", "Registration failed", request);
     }
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ProblemDetail handleUserNotFoundException(
-            UserNotFoundException ex, HttpServletRequest request) {
-        log.debug("User not found: {}", ex.getMessage());
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ProblemDetail handleResourceNotFoundException(
+            ResourceNotFoundException ex, HttpServletRequest request) {
+        log.debug("{} not found: {}", ex.getResourceName(), ex.getMessage());
         return ProblemDetailFactory.build(
-                HttpStatus.NOT_FOUND, "Not Found", "User not found", request);
+                HttpStatus.NOT_FOUND, "Not Found", ex.getResourceName() + " not found", request);
     }
 
     @ExceptionHandler(InvalidRefreshTokenException.class)

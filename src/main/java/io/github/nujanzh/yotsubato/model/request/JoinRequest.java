@@ -1,5 +1,6 @@
-package io.github.nujanzh.yotsubato.model.room;
+package io.github.nujanzh.yotsubato.model.request;
 
+import io.github.nujanzh.yotsubato.model.room.Room;
 import io.github.nujanzh.yotsubato.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,13 +16,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @ToString
-@Table(
-        name = "room_members",
-        uniqueConstraints =
-                @UniqueConstraint(
-                        name = "uniq_room_members_room_id_user_id",
-                        columnNames = {"room_id", "user_id"}))
-public class RoomMember {
+@Table(name = "join_requests")
+public class JoinRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -32,7 +28,7 @@ public class RoomMember {
     @JoinColumn(
             name = "room_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_room_members_room_id"))
+            foreignKey = @ForeignKey(name = "fk_join_requests_room_id"))
     @ToString.Exclude
     private Room room;
 
@@ -40,24 +36,29 @@ public class RoomMember {
     @JoinColumn(
             name = "user_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_room_members_user_id"))
+            foreignKey = @ForeignKey(name = "fk_join_requests_user_id"))
     @ToString.Exclude
     private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MemberRole role;
+    private JoinRequestStatus status;
 
-    @Column(name = "joined_at", insertable = false, updatable = false)
-    private Instant joinedAt;
+    @Column(name = "requested_at", insertable = false, updatable = false)
+    private Instant requestedAt;
 
-    public static RoomMember of(Room room, User user, MemberRole role) {
-        RoomMember roomMember = new RoomMember();
-        roomMember.setRoom(room);
-        roomMember.setUser(user);
-        roomMember.setRole(role);
-        return roomMember;
-    }
+    @Column(name = "reviewed_at")
+    private Instant reviewedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "reviewed_by",
+            foreignKey = @ForeignKey(name = "fk_join_requests_reviewed_by"))
+    @ToString.Exclude
+    private User reviewedBy;
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
 
     @Override
     public final boolean equals(Object o) {
@@ -72,8 +73,8 @@ public class RoomMember {
                         ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass()
                         : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        RoomMember roomMember = (RoomMember) o;
-        return getId() != null && Objects.equals(getId(), roomMember.getId());
+        JoinRequest joinRequest = (JoinRequest) o;
+        return getId() != null && Objects.equals(getId(), joinRequest.getId());
     }
 
     @Override

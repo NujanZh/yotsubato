@@ -35,6 +35,7 @@ public class MessageStatus {
             name = "message_id",
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_message_status_message_id"))
+    @ToString.Exclude
     private Message message;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -42,6 +43,7 @@ public class MessageStatus {
             name = "user_id",
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_message_status_user_id"))
+    @ToString.Exclude
     private User user;
 
     @Enumerated(EnumType.STRING)

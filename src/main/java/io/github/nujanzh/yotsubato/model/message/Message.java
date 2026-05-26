@@ -35,6 +35,7 @@ public class Message {
             name = "sender_id",
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_messages_sender_id"))
+    @ToString.Exclude
     private User sender;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -42,6 +43,7 @@ public class Message {
             name = "room_id",
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_messages_room_id"))
+    @ToString.Exclude
     private Room room;
 
     @ManyToOne(fetch = FetchType.LAZY)

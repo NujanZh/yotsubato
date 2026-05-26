@@ -43,6 +43,7 @@ public class Room {
             name = "created_by",
             nullable = false,
             foreignKey = @ForeignKey(name = "fk_rooms_created_by"))
+    @ToString.Exclude
     private User createdBy;
 
     @OneToMany(mappedBy = "room", fetch = FetchType.LAZY)

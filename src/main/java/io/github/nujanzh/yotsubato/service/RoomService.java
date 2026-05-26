@@ -1,13 +1,17 @@
 package io.github.nujanzh.yotsubato.service;
 
 import io.github.nujanzh.yotsubato.dto.room.DmResult;
-import io.github.nujanzh.yotsubato.dto.room.RoomResponse;
+import io.github.nujanzh.yotsubato.dto.room.RoomDetail;
+import io.github.nujanzh.yotsubato.dto.room.RoomSummary;
+import io.github.nujanzh.yotsubato.exception.RoomNotFoundException;
 import io.github.nujanzh.yotsubato.mapper.RoomMapper;
+import io.github.nujanzh.yotsubato.model.message.Message;
 import io.github.nujanzh.yotsubato.model.room.MemberRole;
 import io.github.nujanzh.yotsubato.model.room.Room;
 import io.github.nujanzh.yotsubato.model.room.RoomMember;
 import io.github.nujanzh.yotsubato.model.room.RoomType;
 import io.github.nujanzh.yotsubato.model.user.User;
+import io.github.nujanzh.yotsubato.repository.message.MessageRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomRepository;
 import io.github.nujanzh.yotsubato.web.service.UserService;
@@ -15,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class RoomService {
@@ -22,18 +28,21 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final UserService userService;
     private final RoomMemberRepository roomMemberRepository;
+    private final MessageRepository messageRepository;
 
     public RoomService(
             RoomRepository roomRepository,
             UserService userService,
-            RoomMemberRepository roomMemberRepository) {
+            RoomMemberRepository roomMemberRepository,
+            MessageRepository messageRepository) {
         this.roomRepository = roomRepository;
         this.userService = userService;
         this.roomMemberRepository = roomMemberRepository;
+        this.messageRepository = messageRepository;
     }
 
     @Transactional
-    public RoomResponse createRoom(
+    public RoomDetail createRoom(
             UUID creatorId,
             String name,
             RoomType type,
@@ -79,8 +88,8 @@ public class RoomService {
 
         if (room.isPresent()) {
             List<RoomMember> members = roomMemberRepository.findByRoomId(room.get().getId());
-            RoomResponse roomResponse = RoomMapper.mapToRoomResponse(room.get(), members);
-            return new DmResult(roomResponse, false);
+            RoomDetail roomDetail = RoomMapper.mapToRoomResponse(room.get(), members);
+            return new DmResult(roomDetail, false);
         }
 
         User caller = userService.getById(callerId);
@@ -98,5 +107,32 @@ public class RoomService {
                                 RoomMember.of(newRoom, otherUser, MemberRole.MEMBER)));
 
         return new DmResult(RoomMapper.mapToRoomResponse(newRoom, saved), true);
+    }
+
+    public List<RoomSummary> getAllRoomsByUserId(UUID userId) {
+        List<Room> rooms = roomRepository.findByMembersUserIdOrderByCreatedAtDesc(userId);
+
+        if (rooms.isEmpty()) {
+            return List.of();
+        }
+
+        List<UUID> roomIds = rooms.stream().map(Room::getId).toList();
+        Map<UUID, Message> latestByRoom =
+                messageRepository.findLatestMessagesInRooms(roomIds).stream()
+                        .collect(Collectors.toMap(m -> m.getRoom().getId(), Function.identity()));
+
+        return RoomMapper.mapToRoomSummaryList(rooms, latestByRoom);
+    }
+
+    public RoomSummary getRoomById(UUID roomId) {
+        Room room =
+                roomRepository
+                        .findById(roomId)
+                        .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
+
+        Message latestMessage =
+                messageRepository.findFirstByRoomIdOrderBySentAtDesc(roomId).orElse(null);
+
+        return RoomMapper.mapToRoomSummary(room, latestMessage);
     }
 }

@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public record RoomResponse(
+public record RoomDetail(
         UUID id,
         String name,
         RoomType type,

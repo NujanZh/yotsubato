@@ -1,11 +1,8 @@
 package io.github.nujanzh.yotsubato.exception;
 
-public class UserNotFoundException extends RuntimeException {
-    public UserNotFoundException(String message, Throwable cause) {
-        super(message, cause);
-    }
+public class UserNotFoundException extends ResourceNotFoundException {
 
     public UserNotFoundException(String message) {
-        super(message);
+        super("User", message);
     }
 }

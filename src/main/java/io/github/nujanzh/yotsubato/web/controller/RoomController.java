@@ -1,9 +1,6 @@
 package io.github.nujanzh.yotsubato.web.controller;
 
-import io.github.nujanzh.yotsubato.dto.room.CreateDmRequest;
-import io.github.nujanzh.yotsubato.dto.room.CreateRoomRequest;
-import io.github.nujanzh.yotsubato.dto.room.DmResult;
-import io.github.nujanzh.yotsubato.dto.room.RoomResponse;
+import io.github.nujanzh.yotsubato.dto.room.*;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.github.nujanzh.yotsubato.service.RoomService;
 import jakarta.validation.Valid;
@@ -13,6 +10,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/rooms")
@@ -25,10 +24,10 @@ public class RoomController {
     }
 
     @PostMapping
-    public ResponseEntity<RoomResponse> createRoom(
+    public ResponseEntity<RoomDetail> createRoom(
             @RequestBody @Valid CreateRoomRequest request,
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
-        RoomResponse response =
+        RoomDetail response =
                 roomService.createRoom(
                         principal.userId(),
                         request.name(),
@@ -42,7 +41,7 @@ public class RoomController {
     }
 
     @PostMapping("/dm")
-    public ResponseEntity<RoomResponse> createDirectMessageRoom(
+    public ResponseEntity<RoomDetail> createDirectMessageRoom(
             @RequestBody @Valid CreateDmRequest request,
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         DmResult result = roomService.getOrCreateDm(principal.userId(), request.userId());
@@ -54,5 +53,20 @@ public class RoomController {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(result.room());
+    }
+
+    @GetMapping
+    public ResponseEntity<List<RoomSummary>> getRooms(
+            @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        List<RoomSummary> rooms = roomService.getAllRoomsByUserId(principal.userId());
+
+        return ResponseEntity.status(HttpStatus.OK).body(rooms);
+    }
+
+    // TODO: implement
+    @GetMapping("/{id}")
+    public ResponseEntity<RoomSummary> getRoom(
+            @PathVariable UUID id, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        return null;
     }
 }

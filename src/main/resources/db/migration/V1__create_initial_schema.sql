@@ -15,18 +15,35 @@ CREATE TABLE users
 
 CREATE TABLE rooms
 (
-    id          UUID         NOT NULL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL,
-    type        VARCHAR(20)  NOT NULL DEFAULT 'PUBLIC',
-    created_by  UUID         NOT NULL,
+    id          UUID        NOT NULL PRIMARY KEY,
+    name        VARCHAR(100),
+    type        VARCHAR(20) NOT NULL DEFAULT 'PUBLIC',
+    created_by  UUID        NOT NULL,
     description VARCHAR(255),
-    created_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    CONSTRAINT chk_rooms_type CHECK (type IN ('PUBLIC', 'PRIVATE')),
+    created_at  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    CONSTRAINT chk_rooms_type CHECK (type IN ('PUBLIC', 'PRIVATE', 'DIRECT')),
     CONSTRAINT fk_rooms_created_by
         FOREIGN KEY (created_by)
             REFERENCES users (id)
             ON DELETE RESTRICT
             ON UPDATE CASCADE
+);
+
+CREATE TABLE join_requests
+(
+    id               UUID PRIMARY KEY,
+    room_id          UUID         NOT NULL,
+    user_id          UUID         NOT NULL,
+    status           VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+    requested_at     TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    reviewed_at      TIMESTAMP(3),
+    reviewed_by      UUID,
+    rejection_reason VARCHAR(255),
+    CONSTRAINT uniq_join_requests_room_id_user_id_status UNIQUE (room_id, user_id, status),
+    CONSTRAINT chk_join_requests_status CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+    CONSTRAINT fk_join_requests_room_id FOREIGN KEY (room_id) REFERENCES rooms (id) ON DELETE CASCADE,
+    CONSTRAINT fk_join_requests_user_id FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_join_requests_reviewed_by FOREIGN KEY (reviewed_by) REFERENCES users (id) ON DELETE SET NULL
 );
 
 CREATE TABLE room_members

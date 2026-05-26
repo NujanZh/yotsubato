@@ -1,3 +1,3 @@
 package io.github.nujanzh.yotsubato.dto.room;
 
-public record DmResult(RoomResponse room, boolean wasCreated) {}
+public record DmResult(RoomDetail room, boolean wasCreated) {}
