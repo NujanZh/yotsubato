@@ -1,5 +1,6 @@
 package io.github.nujanzh.yotsubato.repository.room;
 
+import io.github.nujanzh.yotsubato.model.room.MemberRole;
 import io.github.nujanzh.yotsubato.model.room.RoomMember;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,5 +18,11 @@ public interface RoomMemberRepository extends JpaRepository<RoomMember, UUID> {
     @EntityGraph(attributePaths = {"user"})
     List<RoomMember> findByRoomId(UUID roomId);
 
+    RoomMember findFirstByRoomIdAndRoleOrderByJoinedAtAsc(UUID roomId, MemberRole role);
+
     void deleteByRoomIdAndUserId(UUID roomId, UUID userId);
+
+    int countByRoomId(UUID roomId);
+
+    int countByRoomIdAndRole(UUID roomId, MemberRole role);
 }

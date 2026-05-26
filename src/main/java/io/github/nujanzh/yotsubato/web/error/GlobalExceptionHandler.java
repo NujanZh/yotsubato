@@ -24,7 +24,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleException(Exception ex, HttpServletRequest request) {
-        log.error("Unhandled exception", ex);
+        log.error("Unhandled exception at {}", request.getRequestURI(), ex);
         return ProblemDetailFactory.build(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal Server Error",
@@ -48,28 +48,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid authentication", request);
     }
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ProblemDetail handleUserAlreadyExistsException(
-            UserAlreadyExistsException ex, HttpServletRequest request) {
-        log.warn("User already exists: {}", ex.getMessage());
-        return ProblemDetailFactory.build(
-                HttpStatus.CONFLICT, "Conflict", "Registration failed", request);
-    }
-
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleResourceNotFoundException(
             ResourceNotFoundException ex, HttpServletRequest request) {
         log.debug("{} not found: {}", ex.getResourceName(), ex.getMessage());
         return ProblemDetailFactory.build(
                 HttpStatus.NOT_FOUND, "Not Found", ex.getResourceName() + " not found", request);
-    }
-
-    @ExceptionHandler(InvalidRefreshTokenException.class)
-    public ProblemDetail handleInvalidRefreshTokenException(
-            InvalidRefreshTokenException ex, HttpServletRequest request) {
-        log.warn("Invalid refresh token: {}", ex.getMessage());
-        return ProblemDetailFactory.build(
-                HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid refresh token", request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -80,28 +64,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 HttpStatus.FORBIDDEN, "Forbidden", "Access denied", request);
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
-    public ProblemDetail handleBadCredentialsException(
-            BadCredentialsException ex, HttpServletRequest request) {
-        log.warn("Invalid credentials: {}", ex.getMessage());
-        return ProblemDetailFactory.build(
-                HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid credentials", request);
-    }
-
-    @ExceptionHandler(InvalidMemberException.class)
-    public ProblemDetail handleInvalidMemberException(
-            InvalidMemberException ex, HttpServletRequest request) {
-        log.warn("Invalid member: {}", ex.getMessage());
-        return ProblemDetailFactory.build(
-                HttpStatus.BAD_REQUEST, "Invalid member", ex.getMessage(), request);
-    }
-
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgumentException(
             IllegalArgumentException ex, HttpServletRequest request) {
         log.warn("Invalid argument: {}", ex.getMessage());
         return ProblemDetailFactory.build(
                 HttpStatus.BAD_REQUEST, "Invalid argument", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(DomainException.class)
+    public ProblemDetail handleDomainException(DomainException ex, HttpServletRequest request) {
+        log.warn("{}: {}", ex.getDetail(), ex.getMessage());
+        return ProblemDetailFactory.build(ex.getStatus(), ex.getTitle(), ex.getDetail(), request);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

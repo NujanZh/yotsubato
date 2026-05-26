@@ -1,11 +1,9 @@
 package io.github.nujanzh.yotsubato.exception;
 
-public class InvalidRefreshTokenException extends RuntimeException {
-    public InvalidRefreshTokenException(String message, Throwable cause) {
-        super(message, cause);
-    }
+import org.springframework.http.HttpStatus;
 
+public class InvalidRefreshTokenException extends DomainException {
     public InvalidRefreshTokenException(String message) {
-        super(message);
+        super(HttpStatus.UNAUTHORIZED, "Unauthorized", "Invalid refresh token", message);
     }
 }

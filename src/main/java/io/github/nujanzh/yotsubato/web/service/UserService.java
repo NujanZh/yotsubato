@@ -46,8 +46,7 @@ public class UserService {
         try {
             return userRepository.save(user);
         } catch (DataIntegrityViolationException ex) {
-            throw new UserAlreadyExistsException(
-                    "User with that email or username already exists", ex);
+            throw new UserAlreadyExistsException("User with that email or username already exists");
         }
     }
 

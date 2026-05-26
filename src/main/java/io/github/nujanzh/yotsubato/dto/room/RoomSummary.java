@@ -6,4 +6,9 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record RoomSummary(
-        UUID id, String name, RoomType type, Instant lastMessageAt, String lastMessagePreview) {}
+        UUID id,
+        String name,
+        RoomType type,
+        Instant lastMessageAt,
+        String lastMessagePreview,
+        int memberCount) {}

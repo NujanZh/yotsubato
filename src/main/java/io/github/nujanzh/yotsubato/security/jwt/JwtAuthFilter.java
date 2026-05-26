@@ -55,7 +55,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String token = authHeader.substring(BearerAuthConstants.BEARER_PREFIX.length());
             principal = jwtService.parseAndValidate(token);
         } catch (JwtValidationException ex) {
-            log.debug("JWT validation failed: {}", ex.getMessage());
             SecurityContextHolder.clearContext();
             resolver.resolveException(request, response, null, ex);
             return;
