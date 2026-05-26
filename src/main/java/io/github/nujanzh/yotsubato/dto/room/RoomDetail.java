@@ -13,4 +13,5 @@ public record RoomDetail(
         RoomType type,
         String description,
         Instant createdAt,
-        List<MemberInfo> members) {}
+        List<MemberInfo> members)
+        implements RoomResponse {}

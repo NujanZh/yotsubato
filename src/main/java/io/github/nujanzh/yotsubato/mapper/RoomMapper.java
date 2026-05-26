@@ -2,6 +2,7 @@ package io.github.nujanzh.yotsubato.mapper;
 
 import io.github.nujanzh.yotsubato.dto.member.MemberInfo;
 import io.github.nujanzh.yotsubato.dto.room.RoomDetail;
+import io.github.nujanzh.yotsubato.dto.room.RoomPreview;
 import io.github.nujanzh.yotsubato.dto.room.RoomSummary;
 import io.github.nujanzh.yotsubato.model.message.Message;
 import io.github.nujanzh.yotsubato.model.room.Room;
@@ -15,8 +16,8 @@ public class RoomMapper {
 
     private RoomMapper() {}
 
-    public static RoomDetail mapToRoomResponse(Room room, List<RoomMember> members) {
-        List<MemberInfo> memberInfos = members.stream().map(RoomMapper::mapToMemberInfo).toList();
+    public static RoomDetail toRoomDetail(Room room, List<RoomMember> members) {
+        List<MemberInfo> memberInfos = members.stream().map(RoomMapper::toMemberInfo).toList();
         return new RoomDetail(
                 room.getId(),
                 room.getName(),
@@ -26,7 +27,7 @@ public class RoomMapper {
                 memberInfos);
     }
 
-    public static MemberInfo mapToMemberInfo(RoomMember member) {
+    public static MemberInfo toMemberInfo(RoomMember member) {
         return new MemberInfo(
                 member.getUser().getId(),
                 member.getUser().getUsername(),
@@ -34,29 +35,30 @@ public class RoomMapper {
                 member.getJoinedAt());
     }
 
-    public static RoomSummary mapToRoomSummary(Room room, Message latestMessage) {
+    public static RoomPreview toPreview(Room room, int memberCount) {
+        return new RoomPreview(
+                room.getId(), room.getName(), room.getType(), room.getDescription(), memberCount);
+    }
+
+    public static RoomSummary toRoomSummary(Room room, Message latestMessage, int memberCount) {
         return new RoomSummary(
                 room.getId(),
                 room.getName(),
                 room.getType(),
                 latestMessage != null ? latestMessage.getSentAt() : null,
-                latestMessage != null ? latestMessage.getContent() : null);
+                latestMessage != null ? latestMessage.getContent() : null,
+                memberCount);
     }
 
-    public static List<RoomSummary> mapToRoomSummaryList(
-            List<Room> rooms, Map<UUID, Message> latestByRoomId) {
+    public static List<RoomSummary> toRoomSummaryList(
+            List<Room> rooms, Map<UUID, Message> latestByRoomId, Map<UUID, Integer> memberCounts) {
         return rooms.stream()
                 .map(
-                        room -> {
-                            Message last = latestByRoomId.get(room.getId());
-
-                            return new RoomSummary(
-                                    room.getId(),
-                                    room.getName(),
-                                    room.getType(),
-                                    last != null ? last.getSentAt() : null,
-                                    last != null ? last.getContent() : null);
-                        })
+                        room ->
+                                toRoomSummary(
+                                        room,
+                                        latestByRoomId.get(room.getId()),
+                                        memberCounts.getOrDefault(room.getId(), 0)))
                 .toList();
     }
 }

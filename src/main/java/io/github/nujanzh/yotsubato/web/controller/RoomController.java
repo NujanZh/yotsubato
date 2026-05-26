@@ -59,14 +59,13 @@ public class RoomController {
     public ResponseEntity<List<RoomSummary>> getRooms(
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         List<RoomSummary> rooms = roomService.getAllRoomsByUserId(principal.userId());
-
         return ResponseEntity.status(HttpStatus.OK).body(rooms);
     }
 
-    // TODO: implement
     @GetMapping("/{id}")
-    public ResponseEntity<RoomSummary> getRoom(
+    public ResponseEntity<RoomResponse> getRoom(
             @PathVariable UUID id, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
-        return null;
+        RoomResponse room = roomService.getRoom(id, principal.userId());
+        return ResponseEntity.status(HttpStatus.OK).body(room);
     }
 }

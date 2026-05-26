@@ -1,8 +1,6 @@
 package io.github.nujanzh.yotsubato.service;
 
-import io.github.nujanzh.yotsubato.dto.room.DmResult;
-import io.github.nujanzh.yotsubato.dto.room.RoomDetail;
-import io.github.nujanzh.yotsubato.dto.room.RoomSummary;
+import io.github.nujanzh.yotsubato.dto.room.*;
 import io.github.nujanzh.yotsubato.exception.RoomNotFoundException;
 import io.github.nujanzh.yotsubato.mapper.RoomMapper;
 import io.github.nujanzh.yotsubato.model.message.Message;
@@ -75,7 +73,7 @@ public class RoomService {
                 .forEach(members::add);
 
         List<RoomMember> savedMembers = roomMemberRepository.saveAll(members);
-        return RoomMapper.mapToRoomResponse(room, savedMembers);
+        return RoomMapper.toRoomDetail(room, savedMembers);
     }
 
     @Transactional
@@ -88,7 +86,7 @@ public class RoomService {
 
         if (room.isPresent()) {
             List<RoomMember> members = roomMemberRepository.findByRoomId(room.get().getId());
-            RoomDetail roomDetail = RoomMapper.mapToRoomResponse(room.get(), members);
+            RoomDetail roomDetail = RoomMapper.toRoomDetail(room.get(), members);
             return new DmResult(roomDetail, false);
         }
 
@@ -106,7 +104,7 @@ public class RoomService {
                                 RoomMember.of(newRoom, caller, MemberRole.MEMBER),
                                 RoomMember.of(newRoom, otherUser, MemberRole.MEMBER)));
 
-        return new DmResult(RoomMapper.mapToRoomResponse(newRoom, saved), true);
+        return new DmResult(RoomMapper.toRoomDetail(newRoom, saved), true);
     }
 
     public List<RoomSummary> getAllRoomsByUserId(UUID userId) {
@@ -121,18 +119,32 @@ public class RoomService {
                 messageRepository.findLatestMessagesInRooms(roomIds).stream()
                         .collect(Collectors.toMap(m -> m.getRoom().getId(), Function.identity()));
 
-        return RoomMapper.mapToRoomSummaryList(rooms, latestByRoom);
+        Map<UUID, Integer> memberCounts =
+                roomMemberRepository.countMembersByRoomIds(roomIds).stream()
+                        .collect(
+                                Collectors.toMap(
+                                        RoomMemberCount::getRoomId, c -> c.getCount().intValue()));
+
+        return RoomMapper.toRoomSummaryList(rooms, latestByRoom, memberCounts);
     }
 
-    public RoomSummary getRoomById(UUID roomId) {
+    public RoomResponse getRoom(UUID roomId, UUID callerId) {
         Room room =
                 roomRepository
                         .findById(roomId)
                         .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
 
-        Message latestMessage =
-                messageRepository.findFirstByRoomIdOrderBySentAtDesc(roomId).orElse(null);
+        boolean isMember = roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId);
 
-        return RoomMapper.mapToRoomSummary(room, latestMessage);
+        if (isMember) {
+            return RoomMapper.toRoomDetail(room, roomMemberRepository.findByRoomId(roomId));
+        }
+
+        int memberCount = roomMemberRepository.countByRoomId(roomId);
+
+        return switch (room.getType()) {
+            case PUBLIC, PRIVATE -> RoomMapper.toPreview(room, memberCount);
+            case DIRECT -> throw new RoomNotFoundException("Room not found: " + roomId);
+        };
     }
 }
