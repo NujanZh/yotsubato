@@ -4,6 +4,6 @@ import org.springframework.http.HttpStatus;
 
 public class UserAlreadyMemberException extends DomainException {
     public UserAlreadyMemberException(String message) {
-        super(HttpStatus.CONFLICT, "Conflict", "User already member of this room", message);
+        super(HttpStatus.CONFLICT, "User Already Member", message, message);
     }
 }

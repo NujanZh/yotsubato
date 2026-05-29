@@ -57,7 +57,7 @@ public class JoinRequestService {
 
         boolean isMember = roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId);
         if (isMember) {
-            throw new RoomOperationException("User is already a member of this room");
+            throw new UserAlreadyMemberException("User is already a member of this room");
         }
 
         boolean isRequestExist =
@@ -108,7 +108,7 @@ public class JoinRequestService {
         }
 
         if (roomMemberRepository.existsByRoomIdAndUserId(roomId, request.getUser().getId())) {
-            throw new RoomOperationException("User is already a member of this room");
+            throw new UserAlreadyMemberException("User is already a member of this room");
         }
 
         RoomMember caller = requireAdmin(roomId, callerId);
@@ -149,15 +149,15 @@ public class JoinRequestService {
         JoinRequest request = requireJoinRequest(roomId, requestId);
 
         if (!request.getUser().getId().equals(callerId)) {
-            throw new IllegalArgumentException("Only the user who made the request can cancel it");
+            throw new RoomAccessDeniedException("Only the user who made the request can cancel it");
         }
 
         if (request.getStatus() == JoinRequestStatus.APPROVED) {
-            throw new IllegalArgumentException("Request has already been approved");
+            throw new RoomOperationException("Request has already been approved");
         }
 
         if (request.getStatus() == JoinRequestStatus.REJECTED) {
-            throw new IllegalArgumentException("Request has already been rejected");
+            throw new RoomOperationException("Request has already been rejected");
         }
 
         // TODO: Better to just change status to CANCELED?
@@ -172,12 +172,9 @@ public class JoinRequestService {
         RoomMember caller =
                 roomMemberRepository
                         .findByRoomIdAndUserId(roomId, callerId)
-                        .orElseThrow(
-                                () ->
-                                        new MembershipNotFoundException(
-                                                "Member not found: " + callerId));
+                        .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
         if (caller.getRole() != MemberRole.ADMIN) {
-            throw new IllegalArgumentException("Only admins can perform this action");
+            throw new RoomAccessDeniedException("Only admins can perform this action");
         }
         return caller;
     }

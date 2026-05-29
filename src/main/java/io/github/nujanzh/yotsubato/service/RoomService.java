@@ -153,7 +153,7 @@ public class RoomService {
 
         if (!roomMemberRepository.existsByRoomIdAndUserIdAndRole(
                 roomId, callerId, MemberRole.ADMIN)) {
-            throw new InvalidMemberException("Only admins can add members to a room");
+            throw new RoomAccessDeniedException("Only admins can add members to a room");
         }
 
         return doAddMember(room, targetUserId);
@@ -191,17 +191,14 @@ public class RoomService {
                         .findById(roomId)
                         .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
 
-        if (room.getType() == RoomType.DIRECT) {
-            throw new RoomOperationException("You can't leave a direct room");
-        }
-
         RoomMember caller =
                 roomMemberRepository
                         .findByRoomIdAndUserId(roomId, callerId)
-                        .orElseThrow(
-                                () ->
-                                        new InvalidMemberException(
-                                                "User is not a member of this room"));
+                        .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
+
+        if (room.getType() == RoomType.DIRECT) {
+            throw new RoomOperationException("You can't leave a direct room");
+        }
 
         long memberCount = roomMemberRepository.countByRoomId(roomId);
 
@@ -234,24 +231,21 @@ public class RoomService {
                         .findById(roomId)
                         .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
 
+        RoomMember caller =
+                roomMemberRepository
+                        .findByRoomIdAndUserId(roomId, callerId)
+                        .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
+
         if (room.getType() == RoomType.DIRECT) {
             throw new RoomOperationException("You can't remove members from a direct room");
         }
 
-        RoomMember caller =
-                roomMemberRepository
-                        .findByRoomIdAndUserId(roomId, callerId)
-                        .orElseThrow(
-                                () ->
-                                        new InvalidMemberException(
-                                                "User is not a member of this room"));
-
         if (caller.getRole() != MemberRole.ADMIN) {
-            throw new InvalidMemberException("Only admins can remove members from a room");
+            throw new RoomAccessDeniedException("Only admins can remove members from a room");
         }
 
         if (callerId.equals(targetUserId)) {
-            throw new InvalidMemberException("You cannot remove yourself from the room");
+            throw new RoomOperationException("You cannot remove yourself from the room");
         }
 
         RoomMember target =
@@ -259,7 +253,7 @@ public class RoomService {
                         .findByRoomIdAndUserId(roomId, targetUserId)
                         .orElseThrow(
                                 () ->
-                                        new InvalidMemberException(
+                                        new MembershipNotFoundException(
                                                 "User is not a member of this room"));
 
         MemberInfo memberInfo = RoomMapper.toMemberInfo(target);
@@ -279,17 +273,14 @@ public class RoomService {
         RoomMember caller =
                 roomMemberRepository
                         .findByRoomIdAndUserId(roomId, callerId)
-                        .orElseThrow(
-                                () ->
-                                        new InvalidMemberException(
-                                                "User is not a member of this room"));
+                        .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
 
         if (caller.getRole() != MemberRole.ADMIN) {
-            throw new InvalidMemberException("Only admins can change roles in a room");
+            throw new RoomAccessDeniedException("Only admins can change roles in a room");
         }
 
         if (callerId.equals(targetUserId)) {
-            throw new InvalidMemberException("You cannot change your own role");
+            throw new RoomOperationException("You cannot change your own role");
         }
 
         RoomMember targetUser =
@@ -297,11 +288,11 @@ public class RoomService {
                         .findByRoomIdAndUserId(roomId, targetUserId)
                         .orElseThrow(
                                 () ->
-                                        new InvalidMemberException(
+                                        new MembershipNotFoundException(
                                                 "User is not a member of this room"));
 
         if (targetUser.getRole() == newRole) {
-            throw new InvalidMemberException("User already has the requested role");
+            throw new RoomOperationException("User already has the requested role");
         }
 
         targetUser.setRole(newRole);
