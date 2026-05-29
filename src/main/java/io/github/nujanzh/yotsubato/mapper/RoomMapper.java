@@ -35,7 +35,7 @@ public class RoomMapper {
                 member.getJoinedAt());
     }
 
-    public static RoomPreview toPreview(Room room, int memberCount) {
+    public static RoomPreview toPreview(Room room, long memberCount) {
         return new RoomPreview(
                 room.getId(), room.getName(), room.getType(), room.getDescription(), memberCount);
     }

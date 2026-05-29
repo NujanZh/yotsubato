@@ -1,5 +1,8 @@
 package io.github.nujanzh.yotsubato.web.controller;
 
+import io.github.nujanzh.yotsubato.dto.member.AddMemberRequest;
+import io.github.nujanzh.yotsubato.dto.member.ChangeRoleRequest;
+import io.github.nujanzh.yotsubato.dto.member.MemberInfo;
 import io.github.nujanzh.yotsubato.dto.room.*;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.github.nujanzh.yotsubato.service.RoomService;
@@ -8,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +23,20 @@ public class RoomController {
 
     public RoomController(RoomService roomService) {
         this.roomService = roomService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<RoomSummary>> getAllRooms(
+            @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        List<RoomSummary> rooms = roomService.getAllRoomsByUserId(principal.userId());
+        return ResponseEntity.status(HttpStatus.OK).body(rooms);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<RoomResponse> getRoom(
+            @PathVariable UUID id, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        RoomResponse room = roomService.getRoom(id, principal.userId());
+        return ResponseEntity.status(HttpStatus.OK).body(room);
     }
 
     @PostMapping
@@ -55,17 +71,50 @@ public class RoomController {
         return ResponseEntity.status(HttpStatus.OK).body(result.room());
     }
 
-    @GetMapping
-    public ResponseEntity<List<RoomSummary>> getRooms(
+    @PostMapping("/{id}/members")
+    public ResponseEntity<MemberInfo> addMember(
+            @PathVariable UUID id,
+            @RequestBody AddMemberRequest request,
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
-        List<RoomSummary> rooms = roomService.getAllRoomsByUserId(principal.userId());
-        return ResponseEntity.status(HttpStatus.OK).body(rooms);
+        MemberInfo newMember = roomService.addMember(id, principal.userId(), request.userId());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .location(URI.create("/api/rooms/" + id + "/members/" + newMember.userId()))
+                .body(newMember);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<RoomResponse> getRoom(
+    @PostMapping("/{id}/join")
+    public ResponseEntity<MemberInfo> selfJoin(
             @PathVariable UUID id, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
-        RoomResponse room = roomService.getRoom(id, principal.userId());
-        return ResponseEntity.status(HttpStatus.OK).body(room);
+        MemberInfo newMember = roomService.joinPublicRoom(id, principal.userId());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .location(URI.create("/api/rooms/" + id + "/members/" + newMember.userId()))
+                .body(newMember);
+    }
+
+    @DeleteMapping("/{id}/members/me")
+    public ResponseEntity<MemberInfo> leaveRoom(
+            @PathVariable UUID id, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        MemberInfo memberInfo = roomService.leaveRoom(id, principal.userId());
+        return ResponseEntity.status(HttpStatus.OK).body(memberInfo);
+    }
+
+    @DeleteMapping("/{id}/members/{userId}")
+    public ResponseEntity<MemberInfo> removeMember(
+            @PathVariable UUID id,
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        MemberInfo memberInfo = roomService.removeMember(id, principal.userId(), userId);
+        return ResponseEntity.status(HttpStatus.OK).body(memberInfo);
+    }
+
+    @PatchMapping("/{id}/members/{userId}")
+    public ResponseEntity<MemberInfo> changeMemberRole(
+            @PathVariable UUID id,
+            @PathVariable UUID userId,
+            @RequestBody ChangeRoleRequest request,
+            @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        MemberInfo memberInfo =
+                roomService.changeRole(id, principal.userId(), userId, request.role());
+        return ResponseEntity.status(HttpStatus.OK).body(memberInfo);
     }
 }

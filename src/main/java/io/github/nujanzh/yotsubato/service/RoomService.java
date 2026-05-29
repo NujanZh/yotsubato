@@ -1,7 +1,8 @@
 package io.github.nujanzh.yotsubato.service;
 
+import io.github.nujanzh.yotsubato.dto.member.MemberInfo;
 import io.github.nujanzh.yotsubato.dto.room.*;
-import io.github.nujanzh.yotsubato.exception.RoomNotFoundException;
+import io.github.nujanzh.yotsubato.exception.*;
 import io.github.nujanzh.yotsubato.mapper.RoomMapper;
 import io.github.nujanzh.yotsubato.model.message.Message;
 import io.github.nujanzh.yotsubato.model.room.MemberRole;
@@ -13,6 +14,7 @@ import io.github.nujanzh.yotsubato.repository.message.MessageRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomRepository;
 import io.github.nujanzh.yotsubato.web.service.UserService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,16 +29,19 @@ public class RoomService {
     private final UserService userService;
     private final RoomMemberRepository roomMemberRepository;
     private final MessageRepository messageRepository;
+    private final DmTransactions dmTransactions;
 
     public RoomService(
             RoomRepository roomRepository,
             UserService userService,
             RoomMemberRepository roomMemberRepository,
-            MessageRepository messageRepository) {
+            MessageRepository messageRepository,
+            DmTransactions dmTransactions) {
         this.roomRepository = roomRepository;
         this.userService = userService;
         this.roomMemberRepository = roomMemberRepository;
         this.messageRepository = messageRepository;
+        this.dmTransactions = dmTransactions;
     }
 
     @Transactional
@@ -82,31 +87,14 @@ public class RoomService {
             throw new IllegalArgumentException("Cannot create DM with self");
         }
 
-        Optional<Room> room = roomRepository.findDmBetween(callerId, otherUserId, RoomType.DIRECT);
-
-        if (room.isPresent()) {
-            List<RoomMember> members = roomMemberRepository.findByRoomId(room.get().getId());
-            RoomDetail roomDetail = RoomMapper.toRoomDetail(room.get(), members);
-            return new DmResult(roomDetail, false);
+        try {
+            return dmTransactions.tryToCreateDm(callerId, otherUserId);
+        } catch (DataIntegrityViolationException ex) {
+            return dmTransactions.fetchExistingDm(callerId, otherUserId);
         }
-
-        User caller = userService.getById(callerId);
-        User otherUser = userService.getById(otherUserId);
-
-        Room newRoom = new Room();
-        newRoom.setType(RoomType.DIRECT);
-        newRoom.setCreatedBy(caller);
-        roomRepository.save(newRoom);
-
-        List<RoomMember> saved =
-                roomMemberRepository.saveAll(
-                        List.of(
-                                RoomMember.of(newRoom, caller, MemberRole.MEMBER),
-                                RoomMember.of(newRoom, otherUser, MemberRole.MEMBER)));
-
-        return new DmResult(RoomMapper.toRoomDetail(newRoom, saved), true);
     }
 
+    @Transactional(readOnly = true)
     public List<RoomSummary> getAllRoomsByUserId(UUID userId) {
         List<Room> rooms = roomRepository.findByMembersUserIdOrderByCreatedAtDesc(userId);
 
@@ -117,7 +105,11 @@ public class RoomService {
         List<UUID> roomIds = rooms.stream().map(Room::getId).toList();
         Map<UUID, Message> latestByRoom =
                 messageRepository.findLatestMessagesInRooms(roomIds).stream()
-                        .collect(Collectors.toMap(m -> m.getRoom().getId(), Function.identity()));
+                        .collect(
+                                Collectors.toMap(
+                                        m -> m.getRoom().getId(),
+                                        Function.identity(),
+                                        (a, b) -> a));
 
         Map<UUID, Integer> memberCounts =
                 roomMemberRepository.countMembersByRoomIds(roomIds).stream()
@@ -128,6 +120,7 @@ public class RoomService {
         return RoomMapper.toRoomSummaryList(rooms, latestByRoom, memberCounts);
     }
 
+    @Transactional(readOnly = true)
     public RoomResponse getRoom(UUID roomId, UUID callerId) {
         Room room =
                 roomRepository
@@ -140,11 +133,175 @@ public class RoomService {
             return RoomMapper.toRoomDetail(room, roomMemberRepository.findByRoomId(roomId));
         }
 
-        int memberCount = roomMemberRepository.countByRoomId(roomId);
+        long memberCount = roomMemberRepository.countByRoomId(roomId);
 
         return switch (room.getType()) {
             case PUBLIC, PRIVATE -> RoomMapper.toPreview(room, memberCount);
             case DIRECT -> throw new RoomNotFoundException("Room not found: " + roomId);
         };
+    }
+
+    @Transactional
+    public MemberInfo addMember(UUID roomId, UUID callerId, UUID targetUserId) {
+        Room room =
+                roomRepository
+                        .findById(roomId)
+                        .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
+
+        if (room.getType() == RoomType.DIRECT) {
+            throw new RoomOperationException("You can't add more members to a direct room");
+        }
+
+        if (!roomMemberRepository.existsByRoomIdAndUserIdAndRole(
+                roomId, callerId, MemberRole.ADMIN)) {
+            throw new InvalidMemberException("Only admins can add members to a room");
+        }
+
+        return doAddMember(room, targetUserId);
+    }
+
+    @Transactional
+    public MemberInfo joinPublicRoom(UUID roomId, UUID callerId) {
+        Room room =
+                roomRepository
+                        .findById(roomId)
+                        .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
+
+        if (room.getType() != RoomType.PUBLIC) {
+            throw new RoomOperationException("Room is not a public");
+        }
+
+        return doAddMember(room, callerId);
+    }
+
+    private MemberInfo doAddMember(Room room, UUID userId) {
+        if (roomMemberRepository.existsByRoomIdAndUserId(room.getId(), userId)) {
+            throw new UserAlreadyMemberException("User is already a member of this room");
+        }
+
+        User user = userService.getById(userId);
+        RoomMember member = RoomMember.of(room, user, MemberRole.MEMBER);
+        roomMemberRepository.save(member);
+        return RoomMapper.toMemberInfo(member);
+    }
+
+    @Transactional
+    public MemberInfo leaveRoom(UUID roomId, UUID callerId) {
+        Room room =
+                roomRepository
+                        .findById(roomId)
+                        .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
+
+        if (room.getType() == RoomType.DIRECT) {
+            throw new RoomOperationException("You can't leave a direct room");
+        }
+
+        RoomMember caller =
+                roomMemberRepository
+                        .findByRoomIdAndUserId(roomId, callerId)
+                        .orElseThrow(
+                                () ->
+                                        new InvalidMemberException(
+                                                "User is not a member of this room"));
+
+        long memberCount = roomMemberRepository.countByRoomId(roomId);
+
+        if (memberCount == 1) {
+            roomMemberRepository.deleteByRoomIdAndUserId(roomId, callerId);
+            roomRepository.deleteById(roomId);
+            return RoomMapper.toMemberInfo(caller);
+        }
+
+        if (caller.getRole() == MemberRole.ADMIN) {
+            long adminCount = roomMemberRepository.countByRoomIdAndRole(roomId, MemberRole.ADMIN);
+
+            if (adminCount == 1) {
+                roomMemberRepository
+                        .findFirstByRoomIdAndRoleOrderByJoinedAtAsc(roomId, MemberRole.MEMBER)
+                        .ifPresent(m -> m.setRole(MemberRole.ADMIN));
+            }
+        }
+
+        roomMemberRepository.deleteByRoomIdAndUserId(roomId, callerId);
+        return RoomMapper.toMemberInfo(caller);
+    }
+
+    @Transactional
+    public MemberInfo removeMember(UUID roomId, UUID callerId, UUID targetUserId) {
+        Room room =
+                roomRepository
+                        .findById(roomId)
+                        .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
+
+        if (room.getType() == RoomType.DIRECT) {
+            throw new RoomOperationException("You can't remove members from a direct room");
+        }
+
+        RoomMember caller =
+                roomMemberRepository
+                        .findByRoomIdAndUserId(roomId, callerId)
+                        .orElseThrow(
+                                () ->
+                                        new InvalidMemberException(
+                                                "User is not a member of this room"));
+
+        if (caller.getRole() != MemberRole.ADMIN) {
+            throw new InvalidMemberException("Only admins can remove members from a room");
+        }
+
+        if (callerId.equals(targetUserId)) {
+            throw new InvalidMemberException("You cannot remove yourself from the room");
+        }
+
+        RoomMember target =
+                roomMemberRepository
+                        .findByRoomIdAndUserId(roomId, targetUserId)
+                        .orElseThrow(
+                                () ->
+                                        new InvalidMemberException(
+                                                "User is not a member of this room"));
+
+        roomMemberRepository.deleteByRoomIdAndUserId(roomId, targetUserId);
+        return RoomMapper.toMemberInfo(target);
+    }
+
+    @Transactional
+    public MemberInfo changeRole(
+            UUID roomId, UUID callerId, UUID targetUserId, MemberRole newRole) {
+
+        roomRepository
+                .findById(roomId)
+                .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
+
+        RoomMember caller =
+                roomMemberRepository
+                        .findByRoomIdAndUserId(roomId, callerId)
+                        .orElseThrow(
+                                () ->
+                                        new InvalidMemberException(
+                                                "User is not a member of this room"));
+
+        if (caller.getRole() != MemberRole.ADMIN) {
+            throw new InvalidMemberException("Only admins can change roles in a room");
+        }
+
+        if (callerId.equals(targetUserId)) {
+            throw new InvalidMemberException("You cannot change your own role");
+        }
+
+        RoomMember targetUser =
+                roomMemberRepository
+                        .findByRoomIdAndUserId(roomId, targetUserId)
+                        .orElseThrow(
+                                () ->
+                                        new InvalidMemberException(
+                                                "User is not a member of this room"));
+
+        if (targetUser.getRole() == newRole) {
+            throw new InvalidMemberException("User already has the requested role");
+        }
+
+        targetUser.setRole(newRole);
+        return RoomMapper.toMemberInfo(targetUser);
     }
 }

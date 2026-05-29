@@ -16,12 +16,14 @@ public interface RoomMemberRepository extends JpaRepository<RoomMember, UUID> {
 
     boolean existsByRoomIdAndUserId(UUID roomId, UUID userId);
 
+    boolean existsByRoomIdAndUserIdAndRole(UUID roomId, UUID userId, MemberRole role);
+
     Optional<RoomMember> findByRoomIdAndUserId(UUID roomId, UUID userId);
 
     @EntityGraph(attributePaths = {"user"})
     List<RoomMember> findByRoomId(UUID roomId);
 
-    RoomMember findFirstByRoomIdAndRoleOrderByJoinedAtAsc(UUID roomId, MemberRole role);
+    Optional<RoomMember> findFirstByRoomIdAndRoleOrderByJoinedAtAsc(UUID roomId, MemberRole role);
 
     void deleteByRoomIdAndUserId(UUID roomId, UUID userId);
 

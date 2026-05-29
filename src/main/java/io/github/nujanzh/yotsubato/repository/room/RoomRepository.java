@@ -22,4 +22,6 @@ public interface RoomRepository extends JpaRepository<Room, UUID> {
             AND (SELECT COUNT(m3) FROM RoomMember m3 WHERE m3.room = r) = 2
     """)
     Optional<Room> findDmBetween(UUID userA, UUID userB, RoomType type);
+
+    Optional<Room> findByDmKey(String key);
 }

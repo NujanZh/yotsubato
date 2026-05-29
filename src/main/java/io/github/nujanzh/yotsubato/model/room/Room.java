@@ -35,6 +35,9 @@ public class Room {
 
     private String description;
 
+    @Column(name = "dm_key", length = 73, updatable = false)
+    private String dmKey;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private Instant createdAt;
 
@@ -53,6 +56,14 @@ public class Room {
     @OneToMany(mappedBy = "room", fetch = FetchType.LAZY)
     @ToString.Exclude
     private List<Message> messages = new ArrayList<>();
+
+    public static String createDmKey(UUID a, UUID b) {
+        if (a.equals(b)) {
+            throw new IllegalArgumentException("DM requires two distinct users");
+        }
+
+        return (a.compareTo(b) <= 0) ? a + ":" + b : b + ":" + a;
+    }
 
     @Override
     public final boolean equals(Object o) {

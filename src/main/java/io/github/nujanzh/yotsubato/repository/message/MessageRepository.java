@@ -27,8 +27,11 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
             """
         SELECT m FROM Message m
         WHERE m.room.id IN :roomIds
-            AND m.sentAt = (
-                SELECT MAX(m2.sentAt) FROM Message m2 WHERE m2.room.id = m.room.id
+            AND NOT EXISTS(
+                SELECT 1 FROM Message m2
+                WHERE m2.room.id = m.room.id
+                    AND (m2.sentAt > m.sentAt
+                        OR (m2.sentAt = m.sentAt AND m2.id > m.id))
                 )
     """)
     List<Message> findLatestMessagesInRooms(List<UUID> roomIds);

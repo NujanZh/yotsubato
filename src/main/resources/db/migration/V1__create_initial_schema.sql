@@ -20,8 +20,12 @@ CREATE TABLE rooms
     type        VARCHAR(20) NOT NULL DEFAULT 'PUBLIC',
     created_by  UUID        NOT NULL,
     description VARCHAR(255),
+    dm_key      VARCHAR(73),
     created_at  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT chk_rooms_type CHECK (type IN ('PUBLIC', 'PRIVATE', 'DIRECT')),
+    CONSTRAINT uniq_rooms_dm_key UNIQUE (dm_key),
+    CONSTRAINT chk_rooms_dm_key CHECK ((type = 'DIRECT' AND dm_key IS NOT NULL) OR
+                                       (type <> 'DIRECT' AND dm_key IS NULL)),
     CONSTRAINT fk_rooms_created_by
         FOREIGN KEY (created_by)
             REFERENCES users (id)
