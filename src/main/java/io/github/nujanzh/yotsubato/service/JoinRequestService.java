@@ -16,6 +16,7 @@ import io.github.nujanzh.yotsubato.repository.request.JoinRequestRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomRepository;
 import io.github.nujanzh.yotsubato.web.service.UserService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,7 +74,14 @@ public class JoinRequestService {
         joinRequest.setUser(user);
         joinRequest.setRoom(room);
         joinRequest.setStatus(JoinRequestStatus.PENDING);
-        JoinRequest savedJoinRequest = joinRequestRepository.save(joinRequest);
+
+        JoinRequest savedJoinRequest;
+
+        try {
+            savedJoinRequest = joinRequestRepository.save(joinRequest);
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateJoinRequestException("User already has a pending request");
+        }
 
         return JoinRequestMapper.toJoinRequestResponse(savedJoinRequest);
     }
@@ -84,7 +92,7 @@ public class JoinRequestService {
                 .findById(roomId)
                 .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
 
-        RoomMember caller = requireAdmin(roomId, callerId);
+        requireAdmin(roomId, callerId);
 
         List<JoinRequest> joinRequestList =
                 joinRequestRepository.findByRoomIdAndStatus(roomId, JoinRequestStatus.PENDING);
@@ -97,6 +105,10 @@ public class JoinRequestService {
 
         if (request.getStatus() != JoinRequestStatus.PENDING) {
             throw new RoomOperationException("Request is not pending");
+        }
+
+        if (roomMemberRepository.existsByRoomIdAndUserId(roomId, request.getUser().getId())) {
+            throw new RoomOperationException("User is already a member of this room");
         }
 
         RoomMember caller = requireAdmin(roomId, callerId);
@@ -150,8 +162,10 @@ public class JoinRequestService {
 
         // TODO: Better to just change status to CANCELED?
         // Because if we deleting canceled requests, so we need also delete rejected requests?
+        JoinRequestResponse response = JoinRequestMapper.toJoinRequestResponse(request);
         joinRequestRepository.delete(request);
-        return JoinRequestMapper.toJoinRequestResponse(request);
+
+        return response;
     }
 
     private RoomMember requireAdmin(UUID roomId, UUID callerId) {

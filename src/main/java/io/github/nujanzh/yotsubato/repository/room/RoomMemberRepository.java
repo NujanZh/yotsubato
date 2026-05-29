@@ -18,6 +18,7 @@ public interface RoomMemberRepository extends JpaRepository<RoomMember, UUID> {
 
     boolean existsByRoomIdAndUserIdAndRole(UUID roomId, UUID userId, MemberRole role);
 
+    @EntityGraph(attributePaths = {"user"})
     Optional<RoomMember> findByRoomIdAndUserId(UUID roomId, UUID userId);
 
     @EntityGraph(attributePaths = {"user"})

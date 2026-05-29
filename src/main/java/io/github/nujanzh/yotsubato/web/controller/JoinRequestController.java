@@ -36,7 +36,7 @@ public class JoinRequestController {
             @PathVariable UUID id, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         JoinRequestResponse response = joinRequestService.requestJoin(id, principal.userId());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .location(URI.create("/api/rooms/" + id + "/join-requests" + response.id()))
+                .location(URI.create("/api/rooms/" + id + "/join-requests/" + response.id()))
                 .body(response);
     }
 
@@ -47,7 +47,7 @@ public class JoinRequestController {
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         MemberInfo newMember = joinRequestService.approve(id, reqId, principal.userId());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .location(URI.create("/api/rooms/" + id + "/members" + newMember.userId()))
+                .location(URI.create("/api/rooms/" + id + "/members/" + newMember.userId()))
                 .body(newMember);
     }
 

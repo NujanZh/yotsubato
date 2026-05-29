@@ -81,7 +81,6 @@ public class RoomService {
         return RoomMapper.toRoomDetail(room, savedMembers);
     }
 
-    @Transactional
     public DmResult getOrCreateDm(UUID callerId, UUID otherUserId) {
         if (callerId.equals(otherUserId)) {
             throw new IllegalArgumentException("Cannot create DM with self");
@@ -222,8 +221,10 @@ public class RoomService {
             }
         }
 
+        MemberInfo memberInfo = RoomMapper.toMemberInfo(caller);
         roomMemberRepository.deleteByRoomIdAndUserId(roomId, callerId);
-        return RoomMapper.toMemberInfo(caller);
+
+        return memberInfo;
     }
 
     @Transactional
@@ -261,8 +262,10 @@ public class RoomService {
                                         new InvalidMemberException(
                                                 "User is not a member of this room"));
 
+        MemberInfo memberInfo = RoomMapper.toMemberInfo(target);
         roomMemberRepository.deleteByRoomIdAndUserId(roomId, targetUserId);
-        return RoomMapper.toMemberInfo(target);
+
+        return memberInfo;
     }
 
     @Transactional
