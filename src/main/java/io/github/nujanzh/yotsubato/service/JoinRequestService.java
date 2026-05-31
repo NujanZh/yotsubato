@@ -87,9 +87,10 @@ public class JoinRequestService {
 
     @Transactional(readOnly = true)
     public List<JoinRequestResponse> listPending(UUID roomId, UUID callerId) {
-        roomRepository
-                .findById(roomId)
-                .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
+
+        if (!roomRepository.existsById(roomId)) {
+            throw new RoomNotFoundException("Room not found: " + roomId);
+        }
 
         requireAdmin(roomId, callerId);
 

@@ -27,7 +27,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetailFactory.build(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal Server Error",
-                "An unexpected error occurred.",
+                "An unexpected error occurred",
                 request);
     }
 
@@ -116,7 +116,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ProblemDetailFactory.build(
                         HttpStatus.BAD_REQUEST,
                         "Validation failed",
-                        "One or more fields are invalid.",
+                        "One or more fields are invalid",
                         toHttpRequest(request));
 
         List<ValidationError> errors =

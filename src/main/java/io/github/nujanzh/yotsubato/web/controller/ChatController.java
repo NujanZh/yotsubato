@@ -30,12 +30,12 @@ public class ChatController {
         this.template = template;
     }
 
-    @MessageMapping("/room/{roomId}/message")
+    @MessageMapping("/rooms/{roomId}/message")
     public void sendMessage(
             @DestinationVariable UUID roomId,
             @Payload @Valid SendMessageRequest request,
             Principal principal,
-            @Header(required = false) String clientMessageId) {
+            @Header(name = "clientMessageId", required = false) String clientMessageId) {
 
         AuthenticatedPrincipal user =
                 (AuthenticatedPrincipal) ((Authentication) principal).getPrincipal();
@@ -43,22 +43,24 @@ public class ChatController {
         MessageResponse response = messageService.createMessage(roomId, user.userId(), request);
 
         template.convertAndSend(
-                "/topic/room/" + roomId, response.withClientMessageId(clientMessageId));
+                "/topic/rooms/" + roomId, response.withClientMessageId(clientMessageId));
     }
 
     @MessageExceptionHandler(ResourceNotFoundException.class)
     @SendToUser(destinations = "/queue/error", broadcast = false)
     public StompError handleResourceNotFoundException(
-            ResourceNotFoundException ex, @Header(required = false) String clientMessageId) {
-        return new StompError(HttpStatus.NOT_FOUND.value(), ex.getMessage(), clientMessageId);
+            ResourceNotFoundException ex,
+            @Header(name = "clientMessageId", required = false) String clientMessageId) {
+        String message = "Resource " + ex.getResourceName() + " not found";
+        return new StompError(404, message, clientMessageId);
     }
 
     @MessageExceptionHandler(Exception.class)
     @SendToUser(destinations = "/queue/error", broadcast = false)
     public StompError handleException(
-            Exception ex, @Header(required = false) String clientMessageId) {
+            Exception ex,
+            @Header(name = "clientMessageId", required = false) String clientMessageId) {
         log.error("Unhandled messaging exception", ex);
-        return new StompError(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage(), clientMessageId);
+        return new StompError(500, "An unexpected error occurred", clientMessageId);
     }
 }

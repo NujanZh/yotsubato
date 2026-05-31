@@ -39,14 +39,14 @@ public class MessageService {
 
     @Transactional
     public MessageResponse createMessage(UUID roomId, UUID callerId, SendMessageRequest request) {
-        Room room =
-                roomRepository
-                        .findById(roomId)
-                        .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
 
-        roomMemberRepository
-                .findByRoomIdAndUserId(roomId, callerId)
-                .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
+        boolean isMember = roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId);
+
+        if (!isMember) {
+            throw new RoomNotFoundException("Room not found: " + roomId);
+        }
+
+        Room room = roomRepository.getReferenceById(roomId);
 
         Message message = new Message();
 
@@ -63,11 +63,7 @@ public class MessageService {
                                                             + request.replyToId()));
 
             message.setReplyToId(replyMessage.getId());
-            replyPreview =
-                    new ReplyPreview(
-                            replyMessage.getId(),
-                            replyMessage.getSender().getUsername(),
-                            replyMessage.getContent());
+            replyPreview = ReplyPreview.from(replyMessage);
         }
 
         User sender = userService.getById(callerId);

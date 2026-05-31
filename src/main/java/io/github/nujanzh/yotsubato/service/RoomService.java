@@ -265,9 +265,9 @@ public class RoomService {
     public MemberInfo changeRole(
             UUID roomId, UUID callerId, UUID targetUserId, MemberRole newRole) {
 
-        roomRepository
-                .findById(roomId)
-                .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
+        if (!roomRepository.existsById(roomId)) {
+            throw new RoomNotFoundException("Room not found: " + roomId);
+        }
 
         RoomMember caller =
                 roomMemberRepository
