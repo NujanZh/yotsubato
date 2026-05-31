@@ -1,6 +1,6 @@
-package io.github.nujanzh.yotsubato.dto.request;
+package io.github.nujanzh.yotsubato.dto.joinrequest;
 
-import io.github.nujanzh.yotsubato.model.request.JoinRequestStatus;
+import io.github.nujanzh.yotsubato.model.joinrequest.JoinRequestStatus;
 
 import java.time.Instant;
 import java.util.UUID;

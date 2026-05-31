@@ -1,21 +1,20 @@
 package io.github.nujanzh.yotsubato.service;
 
 import io.github.nujanzh.yotsubato.dto.member.MemberInfo;
-import io.github.nujanzh.yotsubato.dto.request.JoinRequestResponse;
+import io.github.nujanzh.yotsubato.dto.joinrequest.JoinRequestResponse;
 import io.github.nujanzh.yotsubato.exception.*;
 import io.github.nujanzh.yotsubato.mapper.JoinRequestMapper;
 import io.github.nujanzh.yotsubato.mapper.RoomMapper;
-import io.github.nujanzh.yotsubato.model.request.JoinRequest;
-import io.github.nujanzh.yotsubato.model.request.JoinRequestStatus;
+import io.github.nujanzh.yotsubato.model.joinrequest.JoinRequest;
+import io.github.nujanzh.yotsubato.model.joinrequest.JoinRequestStatus;
 import io.github.nujanzh.yotsubato.model.room.MemberRole;
 import io.github.nujanzh.yotsubato.model.room.Room;
 import io.github.nujanzh.yotsubato.model.room.RoomMember;
 import io.github.nujanzh.yotsubato.model.room.RoomType;
 import io.github.nujanzh.yotsubato.model.user.User;
-import io.github.nujanzh.yotsubato.repository.request.JoinRequestRepository;
+import io.github.nujanzh.yotsubato.repository.joinrequest.JoinRequestRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomRepository;
-import io.github.nujanzh.yotsubato.web.service.UserService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

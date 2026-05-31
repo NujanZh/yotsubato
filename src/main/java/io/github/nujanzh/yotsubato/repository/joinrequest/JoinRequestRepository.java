@@ -1,7 +1,7 @@
-package io.github.nujanzh.yotsubato.repository.request;
+package io.github.nujanzh.yotsubato.repository.joinrequest;
 
-import io.github.nujanzh.yotsubato.model.request.JoinRequest;
-import io.github.nujanzh.yotsubato.model.request.JoinRequestStatus;
+import io.github.nujanzh.yotsubato.model.joinrequest.JoinRequest;
+import io.github.nujanzh.yotsubato.model.joinrequest.JoinRequestStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 

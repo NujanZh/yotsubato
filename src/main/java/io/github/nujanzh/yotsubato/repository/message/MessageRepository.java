@@ -36,5 +36,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     """)
     List<Message> findLatestMessagesInRooms(List<UUID> roomIds);
 
+    Optional<Message> findByIdAndRoomId(UUID messageId, UUID roomId);
+
     Optional<Message> findFirstByRoomIdOrderBySentAtDesc(UUID roomId);
 }

@@ -1,4 +1,4 @@
-package io.github.nujanzh.yotsubato.web.service;
+package io.github.nujanzh.yotsubato.service;
 
 import io.github.nujanzh.yotsubato.exception.UserAlreadyExistsException;
 import io.github.nujanzh.yotsubato.exception.UserNotFoundException;

@@ -97,7 +97,6 @@ CREATE TABLE messages
     CONSTRAINT fk_messages_reply_to
         FOREIGN KEY (reply_to)
             REFERENCES messages (id)
-            ON DELETE SET NULL
             ON UPDATE CASCADE
 );
 

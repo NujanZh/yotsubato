@@ -1,4 +1,4 @@
-package io.github.nujanzh.yotsubato.model.request;
+package io.github.nujanzh.yotsubato.model.joinrequest;
 
 public enum JoinRequestStatus {
     PENDING,

@@ -1,4 +1,4 @@
-package io.github.nujanzh.yotsubato.dto.request;
+package io.github.nujanzh.yotsubato.dto.joinrequest;
 
 import jakarta.validation.constraints.Size;
 

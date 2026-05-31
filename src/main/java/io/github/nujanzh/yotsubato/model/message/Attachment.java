@@ -2,6 +2,8 @@ package io.github.nujanzh.yotsubato.model.message;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
@@ -43,6 +45,7 @@ public class Attachment {
     private Long size;
 
     @Column(name = "created_at", insertable = false, updatable = false)
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
     private Instant createdAt;
 
     @Override

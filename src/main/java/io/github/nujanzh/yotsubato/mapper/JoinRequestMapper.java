@@ -1,7 +1,7 @@
 package io.github.nujanzh.yotsubato.mapper;
 
-import io.github.nujanzh.yotsubato.dto.request.JoinRequestResponse;
-import io.github.nujanzh.yotsubato.model.request.JoinRequest;
+import io.github.nujanzh.yotsubato.dto.joinrequest.JoinRequestResponse;
+import io.github.nujanzh.yotsubato.model.joinrequest.JoinRequest;
 
 import java.util.List;
 

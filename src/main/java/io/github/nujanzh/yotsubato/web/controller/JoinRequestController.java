@@ -1,8 +1,8 @@
 package io.github.nujanzh.yotsubato.web.controller;
 
 import io.github.nujanzh.yotsubato.dto.member.MemberInfo;
-import io.github.nujanzh.yotsubato.dto.request.JoinRequestResponse;
-import io.github.nujanzh.yotsubato.dto.request.RejectJoinRequest;
+import io.github.nujanzh.yotsubato.dto.joinrequest.JoinRequestResponse;
+import io.github.nujanzh.yotsubato.dto.joinrequest.RejectJoinRequest;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.github.nujanzh.yotsubato.service.JoinRequestService;
 import org.springframework.http.HttpStatus;

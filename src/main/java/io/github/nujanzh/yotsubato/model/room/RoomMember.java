@@ -3,6 +3,8 @@ package io.github.nujanzh.yotsubato.model.room;
 import io.github.nujanzh.yotsubato.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
@@ -49,6 +51,7 @@ public class RoomMember {
     private MemberRole role;
 
     @Column(name = "joined_at", insertable = false, updatable = false)
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
     private Instant joinedAt;
 
     public static RoomMember of(Room room, User user, MemberRole role) {

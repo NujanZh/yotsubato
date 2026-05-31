@@ -4,7 +4,9 @@ import io.github.nujanzh.yotsubato.model.room.Room;
 import io.github.nujanzh.yotsubato.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.generator.EventType;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
@@ -46,14 +48,8 @@ public class Message {
     @ToString.Exclude
     private Room room;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reply_to", foreignKey = @ForeignKey(name = "fk_messages_reply_to"))
-    @ToString.Exclude
-    private Message replyTo;
-
-    @OneToMany(mappedBy = "replyTo", fetch = FetchType.LAZY)
-    @ToString.Exclude
-    private List<Message> replies = new ArrayList<>();
+    @Column(name = "reply_to")
+    private UUID replyToId;
 
     @OneToMany(mappedBy = "message", fetch = FetchType.LAZY)
     @ToString.Exclude
@@ -76,6 +72,7 @@ public class Message {
     private boolean deleted;
 
     @Column(name = "sent_at", insertable = false, updatable = false)
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
     private Instant sentAt;
 
     @Override

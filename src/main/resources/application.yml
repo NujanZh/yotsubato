@@ -75,8 +75,8 @@ logging:
     org.flywaydb: INFO
 
 jwt:
-  private-key: ${SPRING_JWT_PRIVATE_KEY}
-  public-key: ${SPRING_JWT_PUBLIC_KEY}
+  private-key: classpath:keys/private.pem
+  public-key: classpath:keys/public.pem
   access-token-ttl: PT15M
   refresh-token-ttl: P7D
   issuer: yotsubato

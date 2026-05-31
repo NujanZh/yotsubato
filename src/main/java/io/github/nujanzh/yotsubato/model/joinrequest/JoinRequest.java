@@ -1,9 +1,11 @@
-package io.github.nujanzh.yotsubato.model.request;
+package io.github.nujanzh.yotsubato.model.joinrequest;
 
 import io.github.nujanzh.yotsubato.model.room.Room;
 import io.github.nujanzh.yotsubato.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
@@ -45,6 +47,7 @@ public class JoinRequest {
     private JoinRequestStatus status;
 
     @Column(name = "requested_at", insertable = false, updatable = false)
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
     private Instant requestedAt;
 
     @Column(name = "reviewed_at")

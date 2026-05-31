@@ -6,6 +6,8 @@ import io.github.nujanzh.yotsubato.model.room.Room;
 import io.github.nujanzh.yotsubato.model.room.RoomMember;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
@@ -70,6 +72,7 @@ public class User {
     private List<MessageStatus> statuses = new ArrayList<>();
 
     @Column(name = "created_at", insertable = false, updatable = false)
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
     private Instant createdAt;
 
     @Override
