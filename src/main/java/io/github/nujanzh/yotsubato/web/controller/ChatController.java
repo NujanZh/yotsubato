@@ -12,9 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
 import java.util.UUID;
 
 @Slf4j
@@ -33,11 +34,13 @@ public class ChatController {
     public void sendMessage(
             @DestinationVariable UUID roomId,
             @Payload @Valid SendMessageRequest request,
-            @AuthenticationPrincipal AuthenticatedPrincipal principal,
+            Principal principal,
             @Header(required = false) String clientMessageId) {
 
-        MessageResponse response =
-                messageService.createMessage(roomId, principal.userId(), request);
+        AuthenticatedPrincipal user =
+                (AuthenticatedPrincipal) ((Authentication) principal).getPrincipal();
+
+        MessageResponse response = messageService.createMessage(roomId, user.userId(), request);
 
         template.convertAndSend(
                 "/topic/room/" + roomId, response.withClientMessageId(clientMessageId));

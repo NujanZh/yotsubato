@@ -9,7 +9,7 @@ import org.springframework.http.MediaType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AuthFlowIntegrationTest extends IntegrationTest {
+class AuthFlowIntegrationTest extends IntegrationTest {
 
     @Test
     void register_withValidPayload_returns201AndTokens() {
