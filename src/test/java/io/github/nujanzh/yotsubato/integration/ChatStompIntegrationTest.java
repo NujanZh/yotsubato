@@ -34,14 +34,14 @@ class ChatStompIntegrationTest extends IntegrationTest {
 
         StompSession session = connect(sender.accessToken());
         BlockingQueue<MessageResponse> received =
-                subscribe(session, "/topic/room/" + roomId, MessageResponse.class);
+                subscribe(session, "/topic/rooms/" + roomId, MessageResponse.class);
 
         MessageResponse msg =
                 sendUntilReceived(
                         received,
                         () ->
                                 session.send(
-                                        "/app/room/" + roomId + "/message",
+                                        "/app/rooms/" + roomId + "/message",
                                         new SendMessageRequest(
                                                 "hello world", MessageType.TEXT, null)));
 
@@ -60,10 +60,10 @@ class ChatStompIntegrationTest extends IntegrationTest {
 
         StompSession session = connect(sender.accessToken());
         BlockingQueue<MessageResponse> received =
-                subscribe(session, "/topic/room/" + roomId, MessageResponse.class);
+                subscribe(session, "/topic/rooms/" + roomId, MessageResponse.class);
 
         StompHeaders headers = new StompHeaders();
-        headers.setDestination("/app/room/" + roomId + "/message");
+        headers.setDestination("/app/rooms/" + roomId + "/message");
         headers.add("clientMessageId", "client-123");
 
         MessageResponse msg =
@@ -95,7 +95,7 @@ class ChatStompIntegrationTest extends IntegrationTest {
                         errors,
                         () ->
                                 session.send(
-                                        "/app/room/" + roomId + "/message",
+                                        "/app/rooms/" + roomId + "/message",
                                         new SendMessageRequest("hi", MessageType.TEXT, null)));
 
         assertThat(error).isNotNull();

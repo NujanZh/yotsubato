@@ -102,6 +102,7 @@ public class JoinRequestService {
     @Transactional
     public MemberInfo approve(UUID roomId, UUID requestId, UUID callerId) {
         JoinRequest request = requireJoinRequest(roomId, requestId);
+        RoomMember caller = requireAdmin(roomId, callerId);
 
         if (request.getStatus() != JoinRequestStatus.PENDING) {
             throw new RoomOperationException("Request is not pending");
@@ -111,13 +112,17 @@ public class JoinRequestService {
             throw new UserAlreadyMemberException("User is already a member of this room");
         }
 
-        RoomMember caller = requireAdmin(roomId, callerId);
-
         RoomMember member = new RoomMember();
         member.setRoom(request.getRoom());
         member.setUser(request.getUser());
         member.setRole(MemberRole.MEMBER);
-        RoomMember savedMember = roomMemberRepository.save(member);
+        RoomMember savedMember;
+
+        try {
+            savedMember = roomMemberRepository.save(member);
+        } catch (DataIntegrityViolationException ex) {
+            throw new UserAlreadyMemberException("User already has a pending request");
+        }
 
         request.setStatus(JoinRequestStatus.APPROVED);
         request.setReviewedAt(Instant.now());

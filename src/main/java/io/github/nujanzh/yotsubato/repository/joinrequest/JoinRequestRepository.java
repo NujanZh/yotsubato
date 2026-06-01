@@ -10,6 +10,7 @@ import java.util.UUID;
 
 public interface JoinRequestRepository extends JpaRepository<JoinRequest, UUID> {
 
+    @EntityGraph(attributePaths = {"user"})
     List<JoinRequest> findByRoomIdAndStatus(UUID roomId, JoinRequestStatus status);
 
     JoinRequest findByRoomIdAndUserIdAndStatus(UUID roomId, UUID userId, JoinRequestStatus status);

@@ -1,5 +1,8 @@
 package io.github.nujanzh.yotsubato.web.websocket;
 
+import io.github.nujanzh.yotsubato.exception.RoomNotFoundException;
+import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
+import io.github.nujanzh.yotsubato.repository.room.RoomRepository;
 import io.github.nujanzh.yotsubato.security.jwt.JwtValidationException;
 import io.github.nujanzh.yotsubato.security.jwt.BearerAuthConstants;
 import io.github.nujanzh.yotsubato.security.jwt.JwtService;
@@ -14,18 +17,26 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Component
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
     private final JwtService jwtService;
+    private final RoomMemberRepository roomMemberRepository;
+    private static final AntPathMatcher matcher = new AntPathMatcher();
+    private static final String SUBSCRIBE_DESTINATION_PATTERN = "/topic/rooms/{roomId}";
 
-    public StompAuthChannelInterceptor(JwtService jwtService) {
+    public StompAuthChannelInterceptor(
+            JwtService jwtService, RoomMemberRepository roomMemberRepository) {
         this.jwtService = jwtService;
+        this.roomMemberRepository = roomMemberRepository;
     }
 
     @Override
@@ -60,6 +71,48 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                     new UsernamePasswordAuthenticationToken(principal, null, List.of());
 
             accessor.setUser(auth);
+        }
+
+        if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+            if (accessor.getUser() == null) {
+                log.warn("User not authenticated");
+                throw new BadCredentialsException("Authentication failed");
+            }
+
+            String destination = accessor.getDestination();
+
+            if (destination == null) {
+                // TODO: add custom exception
+
+                log.error("Destination not found in message");
+                throw new BadCredentialsException("Destination not found in STOMP message");
+            }
+
+            if (matcher.match(SUBSCRIBE_DESTINATION_PATTERN, destination)) {
+                String roomIdString =
+                        matcher.extractUriTemplateVariables(
+                                        SUBSCRIBE_DESTINATION_PATTERN, destination)
+                                .get("roomId");
+
+                UUID roomId;
+
+                try {
+                    roomId = UUID.fromString(roomIdString);
+                } catch (IllegalArgumentException ex) {
+                    throw new RoomNotFoundException("Invalid room ID format");
+                }
+
+                AuthenticatedPrincipal user =
+                        (AuthenticatedPrincipal)
+                                ((Authentication) accessor.getUser()).getPrincipal();
+
+                boolean isMember =
+                        roomMemberRepository.existsByRoomIdAndUserId(roomId, user.userId());
+
+                if (!isMember) {
+                    throw new RoomNotFoundException("Room not found: " + roomId);
+                }
+            }
         }
 
         return message;
