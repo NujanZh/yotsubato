@@ -1,7 +1,7 @@
 package io.github.nujanzh.yotsubato.repository.message;
 
 import io.github.nujanzh.yotsubato.model.message.Message;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -21,7 +21,7 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
         ORDER BY m.sentAt DESC, m.id DESC
     """)
     List<Message> findRoomMessagesBefore(
-            UUID roomId, Instant beforeSentAt, UUID beforeId, Pageable pageable);
+            UUID roomId, Instant beforeSentAt, UUID beforeId, Limit limit);
 
     @Query(
             """
@@ -39,4 +39,6 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     Optional<Message> findByIdAndRoomId(UUID messageId, UUID roomId);
 
     Optional<Message> findFirstByRoomIdOrderBySentAtDesc(UUID roomId);
+
+    List<Message> findByRoomIdOrderBySentAtDescIdDesc(UUID roomId, Limit limit);
 }

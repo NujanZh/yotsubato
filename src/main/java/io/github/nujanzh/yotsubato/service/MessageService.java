@@ -1,9 +1,6 @@
 package io.github.nujanzh.yotsubato.service;
 
-import io.github.nujanzh.yotsubato.dto.message.MessageResponse;
-import io.github.nujanzh.yotsubato.dto.message.MessageSender;
-import io.github.nujanzh.yotsubato.dto.message.ReplyPreview;
-import io.github.nujanzh.yotsubato.dto.message.SendMessageRequest;
+import io.github.nujanzh.yotsubato.dto.message.*;
 import io.github.nujanzh.yotsubato.exception.MessageNotFoundException;
 import io.github.nujanzh.yotsubato.exception.RoomNotFoundException;
 import io.github.nujanzh.yotsubato.mapper.MessageMapper;
@@ -13,10 +10,13 @@ import io.github.nujanzh.yotsubato.model.user.User;
 import io.github.nujanzh.yotsubato.repository.message.MessageRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomRepository;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class MessageService {
@@ -25,6 +25,8 @@ public class MessageService {
     private final RoomRepository roomRepository;
     private final RoomMemberRepository roomMemberRepository;
     private final UserService userService;
+
+    private static final int MAX_HISTORY_LIMIT = 100;
 
     public MessageService(
             MessageRepository messageRepository,
@@ -76,5 +78,57 @@ public class MessageService {
         Message savedMessage = messageRepository.saveAndFlush(message);
 
         return MessageMapper.toMessageResponse(savedMessage, messageSender, replyPreview);
+    }
+
+    @Transactional(readOnly = true)
+    public MessageHistoryResponse getRoomHistory(
+            UUID roomId, UUID callerId, MessageCursor cursor, int limit) {
+
+        if (!roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId)) {
+            throw new RoomNotFoundException("Room not found: " + roomId);
+        }
+
+        int safe = Math.clamp(limit, 1, MAX_HISTORY_LIMIT);
+        Limit fetch = Limit.of(safe + 1);
+
+        List<Message> results =
+                cursor == null
+                        ? messageRepository.findByRoomIdOrderBySentAtDescIdDesc(roomId, fetch)
+                        : messageRepository.findRoomMessagesBefore(
+                                roomId, cursor.sentAt(), cursor.lastId(), fetch);
+
+        boolean hasMore = results.size() > safe;
+        if (hasMore) {
+            results = results.subList(0, safe);
+        }
+
+        Set<UUID> senderIds =
+                results.stream().map(m -> m.getSender().getId()).collect(Collectors.toSet());
+        Map<UUID, User> senders =
+                userService.getAllByIds(senderIds).stream()
+                        .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        Set<UUID> parentIds =
+                results.stream()
+                        .map(Message::getReplyToId)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
+        Map<UUID, Message> parents =
+                parentIds.isEmpty()
+                        ? Map.of()
+                        : messageRepository.findAllById(parentIds).stream()
+                                .collect(Collectors.toMap(Message::getId, Function.identity()));
+
+        List<MessageResponse> mapped =
+                MessageMapper.toMessageResponseList(results, senders, parents);
+
+        String nextCursor = null;
+
+        if (hasMore) {
+            Message last = results.getLast();
+            nextCursor = new MessageCursor(last.getSentAt(), last.getId()).encode();
+        }
+
+        return new MessageHistoryResponse(mapped, nextCursor, hasMore);
     }
 }

@@ -3,8 +3,11 @@ package io.github.nujanzh.yotsubato.web.controller;
 import io.github.nujanzh.yotsubato.dto.member.AddMemberRequest;
 import io.github.nujanzh.yotsubato.dto.member.ChangeRoleRequest;
 import io.github.nujanzh.yotsubato.dto.member.MemberInfo;
+import io.github.nujanzh.yotsubato.dto.message.MessageCursor;
+import io.github.nujanzh.yotsubato.dto.message.MessageHistoryResponse;
 import io.github.nujanzh.yotsubato.dto.room.*;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
+import io.github.nujanzh.yotsubato.service.MessageService;
 import io.github.nujanzh.yotsubato.service.RoomService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -20,9 +23,11 @@ import java.util.UUID;
 public class RoomController {
 
     private final RoomService roomService;
+    private final MessageService messageService;
 
-    public RoomController(RoomService roomService) {
+    public RoomController(RoomService roomService, MessageService messageService) {
         this.roomService = roomService;
+        this.messageService = messageService;
     }
 
     @GetMapping
@@ -37,6 +42,21 @@ public class RoomController {
             @PathVariable UUID id, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         RoomResponse room = roomService.getRoom(id, principal.userId());
         return ResponseEntity.status(HttpStatus.OK).body(room);
+    }
+
+    @GetMapping("/{roomId}/messages")
+    public ResponseEntity<MessageHistoryResponse> getHistory(
+            @PathVariable UUID roomId,
+            @AuthenticationPrincipal AuthenticatedPrincipal principal,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "50") int limit) {
+        MessageCursor decoded =
+                (cursor == null || cursor.isBlank()) ? null : MessageCursor.decode(cursor);
+
+        MessageHistoryResponse history =
+                messageService.getRoomHistory(roomId, principal.userId(), decoded, limit);
+
+        return ResponseEntity.status(HttpStatus.OK).body(history);
     }
 
     @PostMapping
