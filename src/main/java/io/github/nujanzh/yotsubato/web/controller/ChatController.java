@@ -1,6 +1,7 @@
 package io.github.nujanzh.yotsubato.web.controller;
 
 import io.github.nujanzh.yotsubato.dto.message.MessageResponse;
+import io.github.nujanzh.yotsubato.dto.message.RoomEvent;
 import io.github.nujanzh.yotsubato.dto.message.SendMessageRequest;
 import io.github.nujanzh.yotsubato.dto.message.StompError;
 import io.github.nujanzh.yotsubato.exception.ResourceNotFoundException;
@@ -8,7 +9,6 @@ import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.github.nujanzh.yotsubato.service.MessageService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
@@ -43,7 +43,8 @@ public class ChatController {
         MessageResponse response = messageService.createMessage(roomId, user.userId(), request);
 
         template.convertAndSend(
-                "/topic/rooms/" + roomId, response.withClientMessageId(clientMessageId));
+                "/topic/rooms/" + roomId,
+                new RoomEvent.MessageCreatedEvent(response.withClientMessageId(clientMessageId)));
     }
 
     @MessageExceptionHandler(ResourceNotFoundException.class)

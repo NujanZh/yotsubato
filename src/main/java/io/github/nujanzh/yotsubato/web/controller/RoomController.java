@@ -3,8 +3,10 @@ package io.github.nujanzh.yotsubato.web.controller;
 import io.github.nujanzh.yotsubato.dto.member.AddMemberRequest;
 import io.github.nujanzh.yotsubato.dto.member.ChangeRoleRequest;
 import io.github.nujanzh.yotsubato.dto.member.MemberInfo;
+import io.github.nujanzh.yotsubato.dto.message.DeleteMessageRequest;
 import io.github.nujanzh.yotsubato.dto.message.MessageCursor;
 import io.github.nujanzh.yotsubato.dto.message.MessageHistoryResponse;
+import io.github.nujanzh.yotsubato.dto.message.RoomEvent;
 import io.github.nujanzh.yotsubato.dto.room.*;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.github.nujanzh.yotsubato.service.MessageService;
@@ -12,6 +14,7 @@ import io.github.nujanzh.yotsubato.service.RoomService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.net.URI;
@@ -24,10 +27,15 @@ public class RoomController {
 
     private final RoomService roomService;
     private final MessageService messageService;
+    private final SimpMessagingTemplate template;
 
-    public RoomController(RoomService roomService, MessageService messageService) {
+    public RoomController(
+            RoomService roomService,
+            MessageService messageService,
+            SimpMessagingTemplate template) {
         this.roomService = roomService;
         this.messageService = messageService;
+        this.template = template;
     }
 
     @GetMapping
@@ -109,6 +117,20 @@ public class RoomController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .location(URI.create("/api/rooms/" + id + "/members/" + newMember.userId()))
                 .body(newMember);
+    }
+
+    @PostMapping("/{id}/messages/delete")
+    public ResponseEntity<Void> deleteMessages(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal AuthenticatedPrincipal principal,
+            @RequestBody @Valid DeleteMessageRequest request) {
+        List<UUID> deletedMessageIds =
+                messageService.deleteMessages(id, principal.userId(), request.messageIds());
+
+        template.convertAndSend(
+                "/topic/rooms/" + id, new RoomEvent.MessageDeletedEvent(deletedMessageIds));
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @DeleteMapping("/{id}/members/me")

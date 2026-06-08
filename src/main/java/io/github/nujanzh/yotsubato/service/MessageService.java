@@ -2,9 +2,11 @@ package io.github.nujanzh.yotsubato.service;
 
 import io.github.nujanzh.yotsubato.dto.message.*;
 import io.github.nujanzh.yotsubato.exception.MessageNotFoundException;
+import io.github.nujanzh.yotsubato.exception.RoomAccessDeniedException;
 import io.github.nujanzh.yotsubato.exception.RoomNotFoundException;
 import io.github.nujanzh.yotsubato.mapper.MessageMapper;
 import io.github.nujanzh.yotsubato.model.message.Message;
+import io.github.nujanzh.yotsubato.model.room.MemberRole;
 import io.github.nujanzh.yotsubato.model.room.Room;
 import io.github.nujanzh.yotsubato.model.user.User;
 import io.github.nujanzh.yotsubato.repository.message.MessageRepository;
@@ -130,5 +132,32 @@ public class MessageService {
         }
 
         return new MessageHistoryResponse(mapped, nextCursor, hasMore);
+    }
+
+    @Transactional
+    public List<UUID> deleteMessages(UUID roomId, UUID callerId, List<UUID> messageIds) {
+        if (!roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId)) {
+            throw new RoomNotFoundException("Room not found: " + roomId);
+        }
+
+        List<Message> messages = messageRepository.findByRoomIdAndIdIn(roomId, messageIds);
+
+        if (messages.size() != messageIds.size()) {
+            throw new MessageNotFoundException("Some messages not found");
+        }
+
+        boolean isAdmin =
+                roomMemberRepository.existsByRoomIdAndUserIdAndRole(
+                        roomId, callerId, MemberRole.ADMIN);
+
+        for (Message message : messages) {
+            if (!(isAdmin || message.getSender().getId().equals(callerId))) {
+                throw new RoomAccessDeniedException("Only admins or sender can delete messages");
+            }
+
+            message.setDeleted(true);
+        }
+
+        return messageIds;
     }
 }

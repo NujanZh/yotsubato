@@ -41,4 +41,6 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     Optional<Message> findFirstByRoomIdOrderBySentAtDesc(UUID roomId);
 
     List<Message> findByRoomIdOrderBySentAtDescIdDesc(UUID roomId, Limit limit);
+
+    List<Message> findByRoomIdAndIdIn(UUID roomId, List<UUID> ids);
 }
