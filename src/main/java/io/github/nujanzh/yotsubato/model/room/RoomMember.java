@@ -51,7 +51,7 @@ public class RoomMember {
     private MemberRole role;
 
     @Column(name = "joined_at", insertable = false, updatable = false)
-    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Generated(event = {EventType.INSERT})
     private Instant joinedAt;
 
     public static RoomMember of(Room room, User user, MemberRole role) {

@@ -47,7 +47,7 @@ public class JoinRequest {
     private JoinRequestStatus status;
 
     @Column(name = "requested_at", insertable = false, updatable = false)
-    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Generated(event = {EventType.INSERT})
     private Instant requestedAt;
 
     @Column(name = "reviewed_at")

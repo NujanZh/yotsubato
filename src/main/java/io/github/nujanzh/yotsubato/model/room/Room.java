@@ -41,7 +41,7 @@ public class Room {
     private String dmKey;
 
     @Column(name = "created_at", insertable = false, updatable = false)
-    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Generated(event = {EventType.INSERT})
     private Instant createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

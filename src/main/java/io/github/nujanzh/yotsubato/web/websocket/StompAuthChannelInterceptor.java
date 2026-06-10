@@ -2,7 +2,6 @@ package io.github.nujanzh.yotsubato.web.websocket;
 
 import io.github.nujanzh.yotsubato.exception.RoomNotFoundException;
 import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
-import io.github.nujanzh.yotsubato.repository.room.RoomRepository;
 import io.github.nujanzh.yotsubato.security.jwt.JwtValidationException;
 import io.github.nujanzh.yotsubato.security.jwt.BearerAuthConstants;
 import io.github.nujanzh.yotsubato.security.jwt.JwtService;
@@ -31,7 +30,6 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private final JwtService jwtService;
     private final RoomMemberRepository roomMemberRepository;
     private static final AntPathMatcher matcher = new AntPathMatcher();
-    private static final String SUBSCRIBE_DESTINATION_PATTERN = "/topic/rooms/{roomId}";
 
     public StompAuthChannelInterceptor(
             JwtService jwtService, RoomMemberRepository roomMemberRepository) {
@@ -88,10 +86,10 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                 throw new BadCredentialsException("Destination not found in STOMP message");
             }
 
-            if (matcher.match(SUBSCRIBE_DESTINATION_PATTERN, destination)) {
+            if (matcher.match(WebSocketDestination.ROOM_TOPIC_PATTERN, destination)) {
                 String roomIdString =
                         matcher.extractUriTemplateVariables(
-                                        SUBSCRIBE_DESTINATION_PATTERN, destination)
+                                        WebSocketDestination.ROOM_TOPIC_PATTERN, destination)
                                 .get("roomId");
 
                 UUID roomId;

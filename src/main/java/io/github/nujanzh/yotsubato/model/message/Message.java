@@ -72,7 +72,7 @@ public class Message {
     private boolean deleted;
 
     @Column(name = "sent_at", insertable = false, updatable = false)
-    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Generated(event = {EventType.INSERT})
     private Instant sentAt;
 
     @Override

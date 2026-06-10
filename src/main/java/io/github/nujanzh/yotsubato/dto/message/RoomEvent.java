@@ -14,7 +14,7 @@ import java.util.UUID;
 public sealed interface RoomEvent
         permits RoomEvent.MessageCreatedEvent, RoomEvent.MessageDeletedEvent {
 
-    record MessageCreatedEvent(MessageResponse messageResponse) implements RoomEvent {}
+    record MessageCreatedEvent(MessageResponse message) implements RoomEvent {}
 
     record MessageDeletedEvent(List<UUID> messageIds) implements RoomEvent {}
 }

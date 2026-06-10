@@ -1,8 +1,7 @@
 package io.github.nujanzh.yotsubato.integration;
 
-import io.github.nujanzh.yotsubato.dto.message.MessageResponse;
-import io.github.nujanzh.yotsubato.dto.message.SendMessageRequest;
-import io.github.nujanzh.yotsubato.dto.message.StompError;
+import io.github.nujanzh.yotsubato.dto.member.AddMemberRequest;
+import io.github.nujanzh.yotsubato.dto.message.*;
 import io.github.nujanzh.yotsubato.dto.room.CreateRoomRequest;
 import io.github.nujanzh.yotsubato.dto.room.RoomDetail;
 import io.github.nujanzh.yotsubato.model.message.MessageType;
@@ -19,11 +18,11 @@ import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 class ChatStompIntegrationTest extends IntegrationTest {
 
@@ -33,10 +32,10 @@ class ChatStompIntegrationTest extends IntegrationTest {
         UUID roomId = createPublicRoom(sender.accessToken());
 
         StompSession session = connect(sender.accessToken());
-        BlockingQueue<MessageResponse> received =
-                subscribe(session, "/topic/rooms/" + roomId, MessageResponse.class);
+        BlockingQueue<RoomEvent> received =
+                subscribe(session, "/topic/rooms/" + roomId, RoomEvent.class);
 
-        MessageResponse msg =
+        RoomEvent event =
                 sendUntilReceived(
                         received,
                         () ->
@@ -44,6 +43,11 @@ class ChatStompIntegrationTest extends IntegrationTest {
                                         "/app/rooms/" + roomId + "/message",
                                         new SendMessageRequest(
                                                 "hello world", MessageType.TEXT, null)));
+
+        assertThat(event).isExactlyInstanceOf(RoomEvent.MessageCreatedEvent.class);
+
+        RoomEvent.MessageCreatedEvent createdEvent = (RoomEvent.MessageCreatedEvent) event;
+        MessageResponse msg = createdEvent.message();
 
         assertThat(msg).isNotNull();
         assertThat(msg.content()).isEqualTo("hello world");
@@ -59,20 +63,25 @@ class ChatStompIntegrationTest extends IntegrationTest {
         UUID roomId = createPublicRoom(sender.accessToken());
 
         StompSession session = connect(sender.accessToken());
-        BlockingQueue<MessageResponse> received =
-                subscribe(session, "/topic/rooms/" + roomId, MessageResponse.class);
+        BlockingQueue<RoomEvent> received =
+                subscribe(session, "/topic/rooms/" + roomId, RoomEvent.class);
 
         StompHeaders headers = new StompHeaders();
         headers.setDestination("/app/rooms/" + roomId + "/message");
         headers.add("clientMessageId", "client-123");
 
-        MessageResponse msg =
+        RoomEvent event =
                 sendUntilReceived(
                         received,
                         () ->
                                 session.send(
                                         headers,
                                         new SendMessageRequest("hi", MessageType.TEXT, null)));
+
+        assertThat(event).isExactlyInstanceOf(RoomEvent.MessageCreatedEvent.class);
+
+        RoomEvent.MessageCreatedEvent createdEvent = (RoomEvent.MessageCreatedEvent) event;
+        MessageResponse msg = createdEvent.message();
 
         assertThat(msg).isNotNull();
         assertThat(msg.clientMessageId()).isEqualTo("client-123");
@@ -102,6 +111,128 @@ class ChatStompIntegrationTest extends IntegrationTest {
         assertThat(error.code()).isEqualTo(404);
 
         session.disconnect();
+    }
+
+    @Test
+    void deleteMessage_viaRest_broadcastsMessageDeletedEvent() throws Exception {
+        TestUser sender = registerUser();
+        UUID roomId = createPublicRoom(sender.accessToken());
+
+        StompSession session = connect(sender.accessToken());
+        BlockingQueue<RoomEvent> received =
+                subscribe(session, "/topic/rooms/" + roomId, RoomEvent.class);
+
+        RoomEvent createdEvent =
+                sendUntilReceived(
+                        received,
+                        () ->
+                                session.send(
+                                        "/app/rooms/" + roomId + "/message",
+                                        new SendMessageRequest(
+                                                "hello world", MessageType.TEXT, null)));
+
+        assertThat(createdEvent).isExactlyInstanceOf(RoomEvent.MessageCreatedEvent.class);
+        UUID msgId = ((RoomEvent.MessageCreatedEvent) createdEvent).message().id();
+
+        authedClient(sender.accessToken())
+                .post()
+                .uri("/rooms/{id}/messages/delete", roomId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new DeleteMessageRequest(List.of(msgId)))
+                .exchange()
+                .expectStatus()
+                .isNoContent();
+
+        RoomEvent event = received.poll(500, TimeUnit.MILLISECONDS);
+
+        assertThat(event).isNotNull().isExactlyInstanceOf(RoomEvent.MessageDeletedEvent.class);
+
+        RoomEvent.MessageDeletedEvent deletedEvent = (RoomEvent.MessageDeletedEvent) event;
+
+        assertThat(deletedEvent.messageIds()).isNotEmpty().contains(msgId);
+
+        session.disconnect();
+    }
+
+    @Test
+    void removedMember_doesNotReceiveSubsequentRoomEvents() throws Exception {
+        TestUser admin = registerUser();
+        TestUser member = registerUser();
+        RoomDetail room =
+                authedClient(admin.accessToken())
+                        .post()
+                        .uri("/rooms")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(
+                                new CreateRoomRequest(
+                                        "Room " + uniqueSuffix(), RoomType.PRIVATE, "a room", null))
+                        .exchange()
+                        .expectStatus()
+                        .isCreated()
+                        .expectBody(RoomDetail.class)
+                        .returnResult()
+                        .getResponseBody();
+
+        StompSession adminSession = connect(admin.accessToken());
+        BlockingQueue<RoomEvent> adminQueue =
+                subscribe(adminSession, "/topic/rooms/" + room.id(), RoomEvent.class);
+
+        authedClient(admin.accessToken())
+                .post()
+                .uri("/rooms/{id}/members", room.id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new AddMemberRequest(member.id()))
+                .exchange()
+                .expectStatus()
+                .isCreated();
+
+        StompSession memberSession = connect(member.accessToken());
+
+        BlockingQueue<RoomEvent> memberQueue =
+                subscribe(memberSession, "/topic/rooms/" + room.id(), RoomEvent.class);
+
+        RoomEvent adminEvent =
+                sendUntilReceived(
+                        adminQueue,
+                        () ->
+                                adminSession.send(
+                                        "/app/rooms/" + room.id() + "/message",
+                                        new SendMessageRequest(
+                                                "Before removal", MessageType.TEXT, null)));
+
+        assertThat(adminEvent).isNotNull().isExactlyInstanceOf(RoomEvent.MessageCreatedEvent.class);
+
+        RoomEvent memberEvent = memberQueue.poll(500, TimeUnit.MILLISECONDS);
+        assertThat(memberEvent)
+                .isNotNull()
+                .isExactlyInstanceOf(RoomEvent.MessageCreatedEvent.class);
+
+        authedClient(admin.accessToken())
+                .delete()
+                .uri("/rooms/{id}/members/{userId}", room.id(), member.id())
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        adminQueue.clear();
+        memberQueue.clear();
+
+        adminEvent =
+                sendUntilReceived(
+                        adminQueue,
+                        () ->
+                                adminSession.send(
+                                        "/app/rooms/" + room.id() + "/message",
+                                        new SendMessageRequest(
+                                                "After removal", MessageType.TEXT, null)));
+
+        assertThat(adminEvent).isNotNull().isExactlyInstanceOf(RoomEvent.MessageCreatedEvent.class);
+
+        memberEvent = memberQueue.poll(1000, TimeUnit.MILLISECONDS);
+        assertThat(memberEvent).isNull();
+
+        adminSession.disconnect();
+        memberSession.disconnect();
     }
 
     @Test

@@ -45,7 +45,7 @@ public class Attachment {
     private Long size;
 
     @Column(name = "created_at", insertable = false, updatable = false)
-    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Generated(event = {EventType.INSERT})
     private Instant createdAt;
 
     @Override

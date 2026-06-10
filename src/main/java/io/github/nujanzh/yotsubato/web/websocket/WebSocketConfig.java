@@ -12,9 +12,13 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final StompAuthChannelInterceptor stompAuthChannelInterceptor;
+    private final RoomOutboundAuthorizationInterceptor roomOutboundAuthorizationInterceptor;
 
-    public WebSocketConfig(StompAuthChannelInterceptor stompAuthChannelInterceptor) {
+    public WebSocketConfig(
+            StompAuthChannelInterceptor stompAuthChannelInterceptor,
+            RoomOutboundAuthorizationInterceptor roomOutboundAuthorizationInterceptor) {
         this.stompAuthChannelInterceptor = stompAuthChannelInterceptor;
+        this.roomOutboundAuthorizationInterceptor = roomOutboundAuthorizationInterceptor;
     }
 
     @Override
@@ -32,5 +36,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(stompAuthChannelInterceptor);
+    }
+
+    @Override
+    public void configureClientOutboundChannel(ChannelRegistration registration) {
+        registration.interceptors(roomOutboundAuthorizationInterceptor);
     }
 }
