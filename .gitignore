@@ -38,3 +38,7 @@ out/
 
 .env
 keys/
+
+!src/test/resources/keys/
+!src/test/resources/keys/private.pem
+!src/test/resources/keys/public.pem
