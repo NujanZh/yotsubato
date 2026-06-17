@@ -52,7 +52,7 @@ public class RoomService {
             List<UUID> initialMemberIds) {
 
         if (type == RoomType.DIRECT) {
-            throw new IllegalArgumentException("Direct room must have exactly one other member");
+            throw new RoomOperationException("Direct room must have exactly one other member");
         }
 
         Set<UUID> uniqueMemberIds = new LinkedHashSet<>(initialMemberIds);
@@ -82,7 +82,7 @@ public class RoomService {
 
     public DmResult getOrCreateDm(UUID callerId, UUID otherUserId) {
         if (callerId.equals(otherUserId)) {
-            throw new IllegalArgumentException("Cannot create DM with self");
+            throw new RoomOperationException("Cannot create DM with self");
         }
 
         try {

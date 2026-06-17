@@ -99,10 +99,8 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
     private void authorizeSubscription(String destination, AuthenticatedPrincipal principal) {
         if (destination == null) {
-            // TODO: add custom exception
-
             log.error("Destination not found in message");
-            throw new BadCredentialsException("Destination not found in STOMP message");
+            throw new IllegalArgumentException("Destination not found in STOMP message");
         }
 
         if (matcher.match(WebSocketDestination.ROOM_TOPIC_PATTERN, destination)) {
