@@ -2,6 +2,7 @@ package io.github.nujanzh.yotsubato.web.websocket;
 
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import jakarta.annotation.Nullable;
+import java.security.Principal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.Message;
@@ -11,8 +12,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-
-import java.security.Principal;
 
 @Slf4j
 @Component
@@ -38,7 +37,8 @@ public class WebSocketEventListener {
 
         if (!(eventUser instanceof Authentication authentication)) {
             log.warn(
-                    "Received SessionConnectedEvent without Spring Security Authentication. sessionId={}, user={}",
+                    "Received SessionConnectedEvent without Spring Security Authentication."
+                            + " sessionId={}, user={}",
                     sessionId,
                     eventUser);
             return;
@@ -46,7 +46,8 @@ public class WebSocketEventListener {
 
         if (!(authentication.getPrincipal() instanceof AuthenticatedPrincipal principal)) {
             log.warn(
-                    "Received SessionConnectedEvent with unsupported principal type. sessionId={}, principalType={}",
+                    "Received SessionConnectedEvent with unsupported principal type. sessionId={},"
+                            + " principalType={}",
                     sessionId,
                     authentication.getPrincipal() == null
                             ? null

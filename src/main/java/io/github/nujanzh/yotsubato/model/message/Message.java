@@ -3,17 +3,16 @@ package io.github.nujanzh.yotsubato.model.message;
 import io.github.nujanzh.yotsubato.model.room.Room;
 import io.github.nujanzh.yotsubato.model.user.User;
 import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.Generated;
-import org.hibernate.annotations.SQLRestriction;
-import org.hibernate.generator.EventType;
-import org.hibernate.proxy.HibernateProxy;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import lombok.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.generator.EventType;
+import org.hibernate.proxy.HibernateProxy;
 
 @Entity
 @AllArgsConstructor

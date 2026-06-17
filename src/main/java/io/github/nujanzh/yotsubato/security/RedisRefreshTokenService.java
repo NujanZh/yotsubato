@@ -1,12 +1,11 @@
 package io.github.nujanzh.yotsubato.security;
 
 import io.github.nujanzh.yotsubato.security.jwt.JwtProperties;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Service;
-
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Service;
 
 @Service
 public class RedisRefreshTokenService {

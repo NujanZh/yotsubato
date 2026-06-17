@@ -1,5 +1,8 @@
 package io.github.nujanzh.yotsubato.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.tuple;
+
 import io.github.nujanzh.yotsubato.dto.member.AddMemberRequest;
 import io.github.nujanzh.yotsubato.dto.member.ChangeRoleRequest;
 import io.github.nujanzh.yotsubato.dto.member.MemberInfo;
@@ -8,13 +11,9 @@ import io.github.nujanzh.yotsubato.dto.room.RoomDetail;
 import io.github.nujanzh.yotsubato.dto.room.RoomSummary;
 import io.github.nujanzh.yotsubato.model.room.MemberRole;
 import io.github.nujanzh.yotsubato.model.room.RoomType;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.tuple;
 
 class RoomIntegrationTest extends IntegrationTest {
 

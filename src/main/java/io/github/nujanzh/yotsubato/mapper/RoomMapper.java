@@ -7,7 +7,6 @@ import io.github.nujanzh.yotsubato.dto.room.RoomSummary;
 import io.github.nujanzh.yotsubato.model.message.Message;
 import io.github.nujanzh.yotsubato.model.room.Room;
 import io.github.nujanzh.yotsubato.model.room.RoomMember;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;

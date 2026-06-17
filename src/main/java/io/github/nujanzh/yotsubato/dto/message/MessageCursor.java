@@ -1,7 +1,6 @@
 package io.github.nujanzh.yotsubato.dto.message;
 
 import io.github.nujanzh.yotsubato.exception.InvalidCursorException;
-
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;

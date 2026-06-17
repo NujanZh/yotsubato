@@ -8,11 +8,10 @@ import io.github.nujanzh.yotsubato.mapper.UserMapper;
 import io.github.nujanzh.yotsubato.model.user.User;
 import io.github.nujanzh.yotsubato.security.RedisRefreshTokenService;
 import io.github.nujanzh.yotsubato.security.jwt.JwtService;
+import java.util.UUID;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service
 public class AuthService {

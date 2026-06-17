@@ -2,11 +2,15 @@ package io.github.nujanzh.yotsubato.web.websocket;
 
 import io.github.nujanzh.yotsubato.exception.RoomNotFoundException;
 import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
-import io.github.nujanzh.yotsubato.security.jwt.JwtValidationException;
 import io.github.nujanzh.yotsubato.security.jwt.BearerAuthConstants;
 import io.github.nujanzh.yotsubato.security.jwt.JwtService;
+import io.github.nujanzh.yotsubato.security.jwt.JwtValidationException;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import jakarta.annotation.Nullable;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -19,11 +23,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Component

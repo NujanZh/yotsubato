@@ -1,13 +1,13 @@
 package io.github.nujanzh.yotsubato.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.github.nujanzh.yotsubato.dto.auth.AuthResponse;
 import io.github.nujanzh.yotsubato.dto.auth.LoginRequest;
 import io.github.nujanzh.yotsubato.dto.auth.RefreshRequest;
 import io.github.nujanzh.yotsubato.dto.auth.RegisterRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class AuthFlowIntegrationTest extends IntegrationTest {
 

@@ -1,7 +1,6 @@
 package io.github.nujanzh.yotsubato.dto.message;
 
 import io.github.nujanzh.yotsubato.model.message.Message;
-
 import java.util.UUID;
 
 public record ReplyPreview(UUID id, String senderUsername, String snippet, boolean deleted) {

@@ -18,7 +18,8 @@ public record RegisterRequest(
                         regexp =
                                 "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
                         message =
-                                "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
+                                "Password must contain at least one uppercase letter, one lowercase"
+                                        + " letter, one number, and one special character")
                 String password,
         @NotBlank(message = "Email must not be empty")
                 @Email(message = "Must be a valid email address")

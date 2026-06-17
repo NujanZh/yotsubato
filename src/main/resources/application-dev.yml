@@ -33,7 +33,7 @@ springdoc:
     tags-sorter: alpha
     try-it-out-enabled: true
   show-actuator: false
-  packages-to-scan: io.github.nujanzh.yotsubato.controller
+  packages-to-scan: io.github.nujanzh.yotsubato.web.controller
 
 jwt:
   private-key: ${JWT_PRIVATE_KEY}

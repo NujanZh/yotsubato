@@ -1,12 +1,11 @@
 package io.github.nujanzh.yotsubato.web.error;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.net.URI;
+import java.util.Objects;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-
-import java.net.URI;
-import java.util.Objects;
 
 public final class ProblemDetailFactory {
 

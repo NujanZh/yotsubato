@@ -5,7 +5,6 @@ import io.github.nujanzh.yotsubato.dto.message.MessageSender;
 import io.github.nujanzh.yotsubato.dto.message.ReplyPreview;
 import io.github.nujanzh.yotsubato.model.message.Message;
 import io.github.nujanzh.yotsubato.model.user.User;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;

@@ -4,11 +4,6 @@ import io.github.nujanzh.yotsubato.model.user.User;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.SignatureException;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.Resource;
-import org.springframework.security.converter.RsaKeyConverters;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
@@ -19,6 +14,10 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.security.converter.RsaKeyConverters;
+import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j

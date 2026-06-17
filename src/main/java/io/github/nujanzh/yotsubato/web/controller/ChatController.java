@@ -8,15 +8,14 @@ import io.github.nujanzh.yotsubato.exception.ResourceNotFoundException;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.github.nujanzh.yotsubato.service.MessageService;
 import jakarta.validation.Valid;
+import java.security.Principal;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-
-import java.security.Principal;
-import java.util.UUID;
 
 @Slf4j
 @Controller

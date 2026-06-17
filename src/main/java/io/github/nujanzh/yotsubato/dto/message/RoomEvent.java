@@ -2,7 +2,6 @@ package io.github.nujanzh.yotsubato.dto.message;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import java.util.List;
 import java.util.UUID;
 

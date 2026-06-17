@@ -1,5 +1,7 @@
 package io.github.nujanzh.yotsubato.integration;
 
+import static org.assertj.core.api.Assertions.*;
+
 import io.github.nujanzh.yotsubato.MutableClock;
 import io.github.nujanzh.yotsubato.MutableClockTestConfig;
 import io.github.nujanzh.yotsubato.dto.member.AddMemberRequest;
@@ -8,6 +10,12 @@ import io.github.nujanzh.yotsubato.dto.room.CreateRoomRequest;
 import io.github.nujanzh.yotsubato.dto.room.RoomDetail;
 import io.github.nujanzh.yotsubato.model.message.MessageType;
 import io.github.nujanzh.yotsubato.model.room.RoomType;
+import java.lang.reflect.Type;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,15 +29,6 @@ import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
-
-import java.lang.reflect.Type;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.*;
-
-import static org.assertj.core.api.Assertions.*;
 
 @Import(MutableClockTestConfig.class)
 class ChatStompIntegrationTest extends IntegrationTest {

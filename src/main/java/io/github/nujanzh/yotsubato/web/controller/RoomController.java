@@ -12,14 +12,14 @@ import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.github.nujanzh.yotsubato.service.MessageService;
 import io.github.nujanzh.yotsubato.service.RoomService;
 import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.List;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import java.net.URI;
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/rooms")

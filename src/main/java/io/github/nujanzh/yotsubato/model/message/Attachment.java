@@ -1,14 +1,13 @@
 package io.github.nujanzh.yotsubato.model.message;
 
 import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.Generated;
 import org.hibernate.generator.EventType;
 import org.hibernate.proxy.HibernateProxy;
-
-import java.time.Instant;
-import java.util.Objects;
-import java.util.UUID;
 
 @Entity
 @AllArgsConstructor

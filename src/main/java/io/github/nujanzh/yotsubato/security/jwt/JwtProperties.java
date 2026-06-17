@@ -1,9 +1,8 @@
 package io.github.nujanzh.yotsubato.security.jwt;
 
+import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.io.Resource;
-
-import java.time.Duration;
 
 @ConfigurationProperties(prefix = "jwt")
 public record JwtProperties(

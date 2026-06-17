@@ -1,5 +1,7 @@
 package io.github.nujanzh.yotsubato.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.github.nujanzh.yotsubato.dto.joinrequest.JoinRequestResponse;
 import io.github.nujanzh.yotsubato.dto.joinrequest.RejectJoinRequest;
 import io.github.nujanzh.yotsubato.dto.member.AddMemberRequest;
@@ -8,12 +10,9 @@ import io.github.nujanzh.yotsubato.dto.room.CreateRoomRequest;
 import io.github.nujanzh.yotsubato.dto.room.RoomDetail;
 import io.github.nujanzh.yotsubato.model.joinrequest.JoinRequestStatus;
 import io.github.nujanzh.yotsubato.model.room.RoomType;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class JoinRequestIntegrationTest extends IntegrationTest {
     @Test

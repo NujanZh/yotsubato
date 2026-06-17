@@ -1,7 +1,6 @@
 package io.github.nujanzh.yotsubato.dto.message;
 
 import io.github.nujanzh.yotsubato.model.message.MessageType;
-
 import java.time.Instant;
 import java.util.UUID;
 
