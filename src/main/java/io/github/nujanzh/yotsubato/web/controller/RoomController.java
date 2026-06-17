@@ -3,10 +3,7 @@ package io.github.nujanzh.yotsubato.web.controller;
 import io.github.nujanzh.yotsubato.dto.member.AddMemberRequest;
 import io.github.nujanzh.yotsubato.dto.member.ChangeRoleRequest;
 import io.github.nujanzh.yotsubato.dto.member.MemberInfo;
-import io.github.nujanzh.yotsubato.dto.message.DeleteMessageRequest;
-import io.github.nujanzh.yotsubato.dto.message.MessageCursor;
-import io.github.nujanzh.yotsubato.dto.message.MessageHistoryResponse;
-import io.github.nujanzh.yotsubato.dto.message.RoomEvent;
+import io.github.nujanzh.yotsubato.dto.message.*;
 import io.github.nujanzh.yotsubato.dto.room.*;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.github.nujanzh.yotsubato.service.MessageService;
@@ -45,10 +42,10 @@ public class RoomController {
         return ResponseEntity.status(HttpStatus.OK).body(rooms);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{roomId}")
     public ResponseEntity<RoomResponse> getRoom(
-            @PathVariable UUID id, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
-        RoomResponse room = roomService.getRoom(id, principal.userId());
+            @PathVariable UUID roomId, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        RoomResponse room = roomService.getRoom(roomId, principal.userId());
         return ResponseEntity.status(HttpStatus.OK).body(room);
     }
 
@@ -99,64 +96,80 @@ public class RoomController {
         return ResponseEntity.status(HttpStatus.OK).body(result.room());
     }
 
-    @PostMapping("/{id}/members")
+    @PostMapping("/{roomId}/members")
     public ResponseEntity<MemberInfo> addMember(
-            @PathVariable UUID id,
+            @PathVariable UUID roomId,
             @RequestBody AddMemberRequest request,
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
-        MemberInfo newMember = roomService.addMember(id, principal.userId(), request.userId());
+        MemberInfo newMember = roomService.addMember(roomId, principal.userId(), request.userId());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .location(URI.create("/api/rooms/" + id + "/members/" + newMember.userId()))
+                .location(URI.create("/api/rooms/" + roomId + "/members/" + newMember.userId()))
                 .body(newMember);
     }
 
-    @PostMapping("/{id}/join")
+    @PostMapping("/{roomId}/join")
     public ResponseEntity<MemberInfo> selfJoin(
-            @PathVariable UUID id, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
-        MemberInfo newMember = roomService.joinPublicRoom(id, principal.userId());
+            @PathVariable UUID roomId, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        MemberInfo newMember = roomService.joinPublicRoom(roomId, principal.userId());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .location(URI.create("/api/rooms/" + id + "/members/" + newMember.userId()))
+                .location(URI.create("/api/rooms/" + roomId + "/members/" + newMember.userId()))
                 .body(newMember);
     }
 
-    @PostMapping("/{id}/messages/delete")
+    @PatchMapping("/{roomId}/messages/{messageId}")
+    public ResponseEntity<MessageResponse> editMessage(
+            @PathVariable UUID roomId,
+            @PathVariable UUID messageId,
+            @AuthenticationPrincipal AuthenticatedPrincipal principal,
+            @RequestBody @Valid UpdateMessageRequest request) {
+
+        MessageResponse response =
+                messageService.editMessage(roomId, messageId, principal.userId(), request);
+
+        template.convertAndSend(
+                "/topic/rooms/" + roomId, new RoomEvent.MessageEditedEvent(response));
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PostMapping("/{roomId}/messages/delete")
     public ResponseEntity<Void> deleteMessages(
-            @PathVariable UUID id,
+            @PathVariable UUID roomId,
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
             @RequestBody @Valid DeleteMessageRequest request) {
         List<UUID> deletedMessageIds =
-                messageService.deleteMessages(id, principal.userId(), request.messageIds());
+                messageService.deleteMessages(roomId, principal.userId(), request.messageIds());
 
         template.convertAndSend(
-                "/topic/rooms/" + id, new RoomEvent.MessageDeletedEvent(deletedMessageIds));
+                "/topic/rooms/" + roomId, new RoomEvent.MessageDeletedEvent(deletedMessageIds));
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    @DeleteMapping("/{id}/members/me")
+    @DeleteMapping("/{roomId}/members/me")
     public ResponseEntity<MemberInfo> leaveRoom(
-            @PathVariable UUID id, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
-        MemberInfo memberInfo = roomService.leaveRoom(id, principal.userId());
+            @PathVariable UUID roomId, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        MemberInfo memberInfo = roomService.leaveRoom(roomId, principal.userId());
         return ResponseEntity.status(HttpStatus.OK).body(memberInfo);
     }
 
-    @DeleteMapping("/{id}/members/{userId}")
+    @DeleteMapping("/{roomId}/members/{userId}")
     public ResponseEntity<MemberInfo> removeMember(
-            @PathVariable UUID id,
+            @PathVariable UUID roomId,
             @PathVariable UUID userId,
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
-        MemberInfo memberInfo = roomService.removeMember(id, principal.userId(), userId);
+        MemberInfo memberInfo = roomService.removeMember(roomId, principal.userId(), userId);
         return ResponseEntity.status(HttpStatus.OK).body(memberInfo);
     }
 
-    @PatchMapping("/{id}/members/{userId}")
+    @PatchMapping("/{roomId}/members/{userId}")
     public ResponseEntity<MemberInfo> changeMemberRole(
-            @PathVariable UUID id,
+            @PathVariable UUID roomId,
             @PathVariable UUID userId,
             @RequestBody ChangeRoleRequest request,
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         MemberInfo memberInfo =
-                roomService.changeRole(id, principal.userId(), userId, request.role());
+                roomService.changeRole(roomId, principal.userId(), userId, request.role());
         return ResponseEntity.status(HttpStatus.OK).body(memberInfo);
     }
 }

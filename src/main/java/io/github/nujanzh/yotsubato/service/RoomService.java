@@ -124,9 +124,7 @@ public class RoomService {
                         .findById(roomId)
                         .orElseThrow(() -> new RoomNotFoundException("Room not found: " + roomId));
 
-        boolean isMember = roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId);
-
-        if (isMember) {
+        if (roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId)) {
             return RoomMapper.toRoomDetail(room, roomMemberRepository.findByRoomId(roomId));
         }
 

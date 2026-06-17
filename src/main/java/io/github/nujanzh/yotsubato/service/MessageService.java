@@ -12,6 +12,9 @@ import io.github.nujanzh.yotsubato.model.user.User;
 import io.github.nujanzh.yotsubato.repository.message.MessageRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomRepository;
+
+import java.time.Clock;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -26,6 +29,7 @@ public class MessageService {
     private final RoomRepository roomRepository;
     private final RoomMemberRepository roomMemberRepository;
     private final UserService userService;
+    private final Clock clock;
 
     private static final int MAX_HISTORY_LIMIT = 100;
 
@@ -33,19 +37,18 @@ public class MessageService {
             MessageRepository messageRepository,
             RoomRepository roomRepository,
             RoomMemberRepository roomMemberRepository,
-            UserService userService) {
+            UserService userService,
+            Clock clock) {
         this.messageRepository = messageRepository;
         this.roomRepository = roomRepository;
         this.roomMemberRepository = roomMemberRepository;
         this.userService = userService;
+        this.clock = clock;
     }
 
     @Transactional
     public MessageResponse createMessage(UUID roomId, UUID callerId, SendMessageRequest request) {
-
-        boolean isMember = roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId);
-
-        if (!isMember) {
+        if (!roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId)) {
             throw new RoomNotFoundException("Room not found: " + roomId);
         }
 
@@ -131,6 +134,47 @@ public class MessageService {
         }
 
         return new MessageHistoryResponse(mapped, nextCursor, hasMore);
+    }
+
+    @Transactional
+    public MessageResponse editMessage(
+            UUID roomId, UUID messageId, UUID callerId, UpdateMessageRequest request) {
+
+        if (!roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId)) {
+            throw new RoomNotFoundException("Room not found: " + roomId);
+        }
+
+        Message message =
+                messageRepository
+                        .findByIdAndRoomId(messageId, roomId)
+                        .orElseThrow(
+                                () ->
+                                        new MessageNotFoundException(
+                                                "Message not found: " + messageId));
+
+        if (!message.getSender().getId().equals(callerId)) {
+            throw new RoomAccessDeniedException("Only sender can edit message");
+        }
+
+        message.setContent(request.content());
+        message.setEditedAt(Instant.now(clock));
+
+        MessageSender sender =
+                new MessageSender(message.getSender().getId(), message.getSender().getUsername());
+
+        Map<UUID, Message> parents = Map.of();
+
+        if (message.getReplyToId() != null) {
+            parents =
+                    messageRepository
+                            .findByIdAndRoomId(message.getReplyToId(), roomId)
+                            .map(m -> Map.of(m.getId(), m))
+                            .orElseGet(Map::of);
+        }
+
+        ReplyPreview preview = MessageMapper.resolveReplyPreview(message, parents);
+
+        return MessageMapper.toMessageResponse(message, sender, preview);
     }
 
     @Transactional

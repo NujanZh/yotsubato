@@ -128,6 +128,52 @@ class ChatStompIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void editMessage_viaRest_broadcastsMessageEditedEvent() throws Exception {
+        TestUser sender = registerUser();
+        UUID roomId = createPublicRoom(sender.accessToken());
+
+        StompSession session = connect(sender.accessToken());
+        BlockingQueue<RoomEvent> received =
+                subscribe(session, "/topic/rooms/" + roomId, RoomEvent.class);
+
+        RoomEvent createdEvent =
+                sendUntilReceived(
+                        received,
+                        () ->
+                                session.send(
+                                        "/app/rooms/" + roomId + "/message",
+                                        new SendMessageRequest(
+                                                "before edit", MessageType.TEXT, null)));
+
+        assertThat(createdEvent).isExactlyInstanceOf(RoomEvent.MessageCreatedEvent.class);
+        UUID msgId = ((RoomEvent.MessageCreatedEvent) createdEvent).message().id();
+
+        received.clear();
+
+        authedClient(sender.accessToken())
+                .patch()
+                .uri("/rooms/{roomId}/messages/{messageId}", roomId, msgId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new UpdateMessageRequest("after edit"))
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        RoomEvent event = received.poll(500, TimeUnit.MILLISECONDS);
+
+        assertThat(event).isNotNull().isExactlyInstanceOf(RoomEvent.MessageEditedEvent.class);
+
+        RoomEvent.MessageEditedEvent editedEvent = (RoomEvent.MessageEditedEvent) event;
+
+        assertThat(editedEvent.message().id()).isEqualTo(msgId);
+        assertThat(editedEvent.message().roomId()).isEqualTo(roomId);
+        assertThat(editedEvent.message().content()).isEqualTo("after edit");
+        assertThat(editedEvent.message().editedAt()).isNotNull();
+
+        session.disconnect();
+    }
+
+    @Test
     void deleteMessage_viaRest_broadcastsMessageDeletedEvent() throws Exception {
         TestUser sender = registerUser();
         UUID roomId = createPublicRoom(sender.accessToken());

@@ -53,16 +53,12 @@ public class JoinRequestService {
                     "Room is not a private, user can join without a request");
         }
 
-        boolean isMember = roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId);
-        if (isMember) {
+        if (roomMemberRepository.existsByRoomIdAndUserId(roomId, callerId)) {
             throw new UserAlreadyMemberException("User is already a member of this room");
         }
 
-        boolean isRequestExist =
-                joinRequestRepository.existsByRoomIdAndUserIdAndStatus(
-                        roomId, callerId, JoinRequestStatus.PENDING);
-
-        if (isRequestExist) {
+        if (joinRequestRepository.existsByRoomIdAndUserIdAndStatus(
+                roomId, callerId, JoinRequestStatus.PENDING)) {
             throw new DuplicateJoinRequestException("User already has a pending request");
         }
 

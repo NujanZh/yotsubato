@@ -1,5 +1,7 @@
 # Yotsubato
 
+[![CI](https://github.com/NujanZh/yotsubato/actions/workflows/ci.yml/badge.svg)](https://github.com/NujanZh/yotsubato/actions/workflows/ci.yml)
+
 Yotsubato is a real-time messaging backend built with Spring Boot. It provides REST APIs for authentication, rooms,
 memberships, join requests, and message history, plus STOMP over WebSocket for live room events.
 

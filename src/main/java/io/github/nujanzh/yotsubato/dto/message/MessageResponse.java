@@ -11,11 +11,12 @@ public record MessageResponse(
         String content,
         MessageType type,
         Instant sentAt,
+        Instant editedAt,
         ReplyPreview replyTo,
         String clientMessageId) {
 
     public MessageResponse withClientMessageId(String clientMessageId) {
         return new MessageResponse(
-                id, roomId, sender, content, type, sentAt, replyTo, clientMessageId);
+                id, roomId, sender, content, type, sentAt, editedAt, replyTo, clientMessageId);
     }
 }

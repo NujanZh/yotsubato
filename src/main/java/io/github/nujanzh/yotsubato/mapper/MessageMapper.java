@@ -22,6 +22,7 @@ public class MessageMapper {
                 message.getContent(),
                 message.getType(),
                 message.getSentAt(),
+                message.getEditedAt(),
                 replyPreview,
                 null);
     }
@@ -44,7 +45,7 @@ public class MessageMapper {
         return toMessageResponse(m, messageSender, preview);
     }
 
-    private static ReplyPreview resolveReplyPreview(Message m, Map<UUID, Message> parents) {
+    public static ReplyPreview resolveReplyPreview(Message m, Map<UUID, Message> parents) {
         if (m.getReplyToId() == null) {
             return null;
         }
