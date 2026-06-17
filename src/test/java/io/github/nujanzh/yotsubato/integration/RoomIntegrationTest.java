@@ -15,9 +15,8 @@ import io.github.nujanzh.yotsubato.dto.room.RoomSummary;
 import io.github.nujanzh.yotsubato.model.message.MessageType;
 import io.github.nujanzh.yotsubato.model.room.MemberRole;
 import io.github.nujanzh.yotsubato.model.room.RoomType;
-import java.util.UUID;
-
 import io.github.nujanzh.yotsubato.service.MessageService;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

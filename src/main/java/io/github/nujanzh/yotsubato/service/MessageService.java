@@ -12,7 +12,6 @@ import io.github.nujanzh.yotsubato.model.user.User;
 import io.github.nujanzh.yotsubato.repository.message.MessageRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
 import io.github.nujanzh.yotsubato.repository.room.RoomRepository;
-
 import java.time.Clock;
 import java.time.Instant;
 import java.util.*;
