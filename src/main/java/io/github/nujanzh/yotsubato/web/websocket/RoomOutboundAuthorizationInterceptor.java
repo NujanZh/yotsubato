@@ -11,6 +11,8 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,12 +22,16 @@ public class RoomOutboundAuthorizationInterceptor implements ChannelInterceptor 
 
     private final RoomMemberRepository roomMemberRepository;
     private final WebSocketSessionRegistry sessionRegistry;
+    private final Clock clock;
     private static final AntPathMatcher matcher = new AntPathMatcher();
 
     public RoomOutboundAuthorizationInterceptor(
-            RoomMemberRepository roomMemberRepository, WebSocketSessionRegistry sessionRegistry) {
+            RoomMemberRepository roomMemberRepository,
+            WebSocketSessionRegistry sessionRegistry,
+            Clock clock) {
         this.roomMemberRepository = roomMemberRepository;
         this.sessionRegistry = sessionRegistry;
+        this.clock = clock;
     }
 
     @Override
@@ -50,13 +56,24 @@ public class RoomOutboundAuthorizationInterceptor implements ChannelInterceptor 
             return null;
         }
 
-        Optional<UUID> userId = sessionRegistry.findUserId(sessionId);
+        Optional<WebSocketSessionInfo> sessionInfoOptional =
+                sessionRegistry.findBySessionId(sessionId);
 
-        if (userId.isEmpty()) {
+        if (sessionInfoOptional.isEmpty()) {
             log.debug(
-                    "User ID not found for session. session={}, destination={}",
+                    "Session Info not found for session. session={}, destination={}",
                     sessionId,
                     destination);
+            return null;
+        }
+
+        WebSocketSessionInfo sessionInfo = sessionInfoOptional.get();
+
+        // TODO: Maybe move into helper so both Interceptor can use it
+        Instant now = Instant.now(clock);
+
+        if (!now.isBefore(sessionInfo.expiresAt())) {
+            log.debug("Session expired. session={}, destination={}", sessionId, destination);
             return null;
         }
 
@@ -74,10 +91,11 @@ public class RoomOutboundAuthorizationInterceptor implements ChannelInterceptor 
             return null;
         }
 
-        boolean isMember = roomMemberRepository.existsByRoomIdAndUserId(roomId, userId.get());
+        boolean isMember =
+                roomMemberRepository.existsByRoomIdAndUserId(roomId, sessionInfo.userId());
 
         if (!isMember) {
-            log.debug("User not a member. user={}, room={}", userId.get(), roomId);
+            log.debug("User not a member. user={}, room={}", sessionInfo.userId(), roomId);
             return null;
         }
 

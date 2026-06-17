@@ -2,6 +2,7 @@ package io.github.nujanzh.yotsubato.web.websocket;
 
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -9,16 +10,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class WebSocketSessionRegistry {
-    private final ConcurrentHashMap<String, UUID> sessions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, WebSocketSessionInfo> sessions =
+            new ConcurrentHashMap<>();
 
-    public void register(String sessionId, UUID userId) {
+    public void register(String sessionId, UUID userId, Instant expiresAt) {
         Objects.requireNonNull(sessionId, "Session ID can't be null");
-        Objects.requireNonNull(userId, "User ID can't be null");
 
-        this.sessions.put(sessionId, userId);
+        WebSocketSessionInfo sessionInfo = new WebSocketSessionInfo(userId, expiresAt);
+        this.sessions.put(sessionId, sessionInfo);
     }
 
-    public Optional<UUID> findUserId(String sessionId) {
+    public Optional<WebSocketSessionInfo> findBySessionId(String sessionId) {
         if (sessionId == null) {
             return Optional.empty();
         }

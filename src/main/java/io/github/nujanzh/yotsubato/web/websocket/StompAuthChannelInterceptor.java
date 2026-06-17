@@ -20,6 +20,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,12 +31,14 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
     private final JwtService jwtService;
     private final RoomMemberRepository roomMemberRepository;
+    private final Clock clock;
     private static final AntPathMatcher matcher = new AntPathMatcher();
 
     public StompAuthChannelInterceptor(
-            JwtService jwtService, RoomMemberRepository roomMemberRepository) {
+            JwtService jwtService, RoomMemberRepository roomMemberRepository, Clock clock) {
         this.jwtService = jwtService;
         this.roomMemberRepository = roomMemberRepository;
+        this.clock = clock;
     }
 
     @Override
@@ -47,72 +51,104 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             throw new IllegalStateException("StompHeaderAccessor missing from STOMP message");
         }
 
-        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            String header = accessor.getFirstNativeHeader(BearerAuthConstants.AUTHORIZATION_HEADER);
+        StompCommand command = accessor.getCommand();
 
-            if (header == null || !header.startsWith(BearerAuthConstants.BEARER_PREFIX)) {
-                log.warn("Missing or invalid authorization header");
-                throw new BadCredentialsException("Authentication failed");
+        switch (command) {
+            case CONNECT -> authenticateConnect(accessor);
+            case SEND -> requireActivePrincipal(accessor);
+            case SUBSCRIBE ->
+                    authorizeSubscription(
+                            accessor.getDestination(), requireActivePrincipal(accessor));
+            case null -> {
+                // if command null just return a message
             }
-
-            AuthenticatedPrincipal principal;
-
-            try {
-                String token = header.substring(BearerAuthConstants.BEARER_PREFIX.length());
-                principal = jwtService.parseAndValidate(token);
-            } catch (JwtValidationException ex) {
-                log.debug("JWT validation failed: {}", ex.getMessage());
-                throw new BadCredentialsException("Authentication failed", ex);
-            }
-
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(principal, null, List.of());
-
-            accessor.setUser(auth);
-        }
-
-        if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
-            if (accessor.getUser() == null) {
-                log.warn("User not authenticated");
-                throw new BadCredentialsException("Authentication failed");
-            }
-
-            String destination = accessor.getDestination();
-
-            if (destination == null) {
-                // TODO: add custom exception
-
-                log.error("Destination not found in message");
-                throw new BadCredentialsException("Destination not found in STOMP message");
-            }
-
-            if (matcher.match(WebSocketDestination.ROOM_TOPIC_PATTERN, destination)) {
-                String roomIdString =
-                        matcher.extractUriTemplateVariables(
-                                        WebSocketDestination.ROOM_TOPIC_PATTERN, destination)
-                                .get("roomId");
-
-                UUID roomId;
-
-                try {
-                    roomId = UUID.fromString(roomIdString);
-                } catch (IllegalArgumentException ex) {
-                    throw new RoomNotFoundException("Invalid room ID format");
-                }
-
-                AuthenticatedPrincipal user =
-                        (AuthenticatedPrincipal)
-                                ((Authentication) accessor.getUser()).getPrincipal();
-
-                boolean isMember =
-                        roomMemberRepository.existsByRoomIdAndUserId(roomId, user.userId());
-
-                if (!isMember) {
-                    throw new RoomNotFoundException("Room not found: " + roomId);
-                }
+            default -> {
+                // ignore other commands
             }
         }
 
         return message;
+    }
+
+    private AuthenticatedPrincipal requireAuthenticatedPrincipal(StompHeaderAccessor accessor) {
+        if (!(accessor.getUser() instanceof Authentication authentication)) {
+            log.warn("Authentication not found in message");
+            throw new BadCredentialsException("Authentication failed");
+        }
+
+        if (!(authentication.getPrincipal() instanceof AuthenticatedPrincipal principal)) {
+            log.warn("Principal not found in message");
+            throw new BadCredentialsException("Authentication failed");
+        }
+
+        return principal;
+    }
+
+    private AuthenticatedPrincipal requireActivePrincipal(StompHeaderAccessor accessor) {
+        AuthenticatedPrincipal principal = requireAuthenticatedPrincipal(accessor);
+
+        Instant now = Instant.now(clock);
+
+        if (!now.isBefore(principal.expiresAt())) {
+            log.debug("Session expired");
+            throw new BadCredentialsException("Session expired");
+        }
+
+        return principal;
+    }
+
+    private void authorizeSubscription(String destination, AuthenticatedPrincipal principal) {
+        if (destination == null) {
+            // TODO: add custom exception
+
+            log.error("Destination not found in message");
+            throw new BadCredentialsException("Destination not found in STOMP message");
+        }
+
+        if (matcher.match(WebSocketDestination.ROOM_TOPIC_PATTERN, destination)) {
+            String roomIdString =
+                    matcher.extractUriTemplateVariables(
+                                    WebSocketDestination.ROOM_TOPIC_PATTERN, destination)
+                            .get("roomId");
+
+            UUID roomId;
+
+            try {
+                roomId = UUID.fromString(roomIdString);
+            } catch (IllegalArgumentException ex) {
+                throw new RoomNotFoundException("Invalid room ID format");
+            }
+
+            boolean isMember =
+                    roomMemberRepository.existsByRoomIdAndUserId(roomId, principal.userId());
+
+            if (!isMember) {
+                throw new RoomNotFoundException("Room not found: " + roomId);
+            }
+        }
+    }
+
+    private void authenticateConnect(StompHeaderAccessor accessor) {
+        String header = accessor.getFirstNativeHeader(BearerAuthConstants.AUTHORIZATION_HEADER);
+
+        if (header == null || !header.startsWith(BearerAuthConstants.BEARER_PREFIX)) {
+            log.warn("Missing or invalid authorization header");
+            throw new BadCredentialsException("Authentication failed");
+        }
+
+        AuthenticatedPrincipal principal;
+
+        try {
+            String token = header.substring(BearerAuthConstants.BEARER_PREFIX.length());
+            principal = jwtService.parseAndValidate(token);
+        } catch (JwtValidationException ex) {
+            log.debug("JWT validation failed: {}", ex.getMessage());
+            throw new BadCredentialsException("Authentication failed", ex);
+        }
+
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(principal, null, List.of());
+
+        accessor.setUser(auth);
     }
 }

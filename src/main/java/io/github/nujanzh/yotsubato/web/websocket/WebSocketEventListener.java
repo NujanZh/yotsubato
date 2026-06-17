@@ -1,17 +1,18 @@
 package io.github.nujanzh.yotsubato.web.websocket;
 
+import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.security.Principal;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -33,12 +34,23 @@ public class WebSocketEventListener {
         Message<byte[]> message = event.getMessage();
         StompHeaderAccessor headers = StompHeaderAccessor.wrap(message);
         String sessionId = headers.getSessionId();
-        Principal principal = event.getUser();
+        Principal eventUser = event.getUser();
 
-        if (principal == null) {
+        if (!(eventUser instanceof Authentication authentication)) {
             log.warn(
-                    "Received SessionConnectedEvent without authenticated principal. sessionId={}",
-                    sessionId);
+                    "Received SessionConnectedEvent without Spring Security Authentication. sessionId={}, user={}",
+                    sessionId,
+                    eventUser);
+            return;
+        }
+
+        if (!(authentication.getPrincipal() instanceof AuthenticatedPrincipal principal)) {
+            log.warn(
+                    "Received SessionConnectedEvent with unsupported principal type. sessionId={}, principalType={}",
+                    sessionId,
+                    authentication.getPrincipal() == null
+                            ? null
+                            : authentication.getPrincipal().getClass().getName());
             return;
         }
 
@@ -49,16 +61,7 @@ public class WebSocketEventListener {
             return;
         }
 
-        UUID userId;
-
-        try {
-            userId = UUID.fromString(principal.getName());
-        } catch (IllegalArgumentException ex) {
-            log.warn("Principal name is not a valid UUID: {}", principal.getName());
-            return;
-        }
-
-        sessionRegistry.register(sessionId, userId);
+        sessionRegistry.register(sessionId, principal.userId(), principal.expiresAt());
     }
 
     @EventListener

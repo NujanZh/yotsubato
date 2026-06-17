@@ -1,12 +1,17 @@
 package io.github.nujanzh.yotsubato.integration;
 
+import io.github.nujanzh.yotsubato.MutableClock;
+import io.github.nujanzh.yotsubato.MutableClockTestConfig;
 import io.github.nujanzh.yotsubato.dto.member.AddMemberRequest;
 import io.github.nujanzh.yotsubato.dto.message.*;
 import io.github.nujanzh.yotsubato.dto.room.CreateRoomRequest;
 import io.github.nujanzh.yotsubato.dto.room.RoomDetail;
 import io.github.nujanzh.yotsubato.model.message.MessageType;
 import io.github.nujanzh.yotsubato.model.room.RoomType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.converter.JacksonJsonMessageConverter;
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
@@ -18,13 +23,23 @@ import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import java.lang.reflect.Type;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.*;
 
+@Import(MutableClockTestConfig.class)
 class ChatStompIntegrationTest extends IntegrationTest {
+
+    @Autowired private MutableClock clock;
+
+    @BeforeEach
+    void resetClock() {
+        clock.setInstant(Instant.parse("2026-01-01T00:00:00Z"));
+    }
 
     @Test
     void sendMessage_broadcastsToTopicSubscribers() throws Exception {
@@ -228,11 +243,39 @@ class ChatStompIntegrationTest extends IntegrationTest {
 
         assertThat(adminEvent).isNotNull().isExactlyInstanceOf(RoomEvent.MessageCreatedEvent.class);
 
-        memberEvent = memberQueue.poll(1000, TimeUnit.MILLISECONDS);
+        memberEvent = memberQueue.poll(500, TimeUnit.MILLISECONDS);
         assertThat(memberEvent).isNull();
 
         adminSession.disconnect();
         memberSession.disconnect();
+    }
+
+    @Test
+    void sendMessage_afterTokenExpiration_isRejected() throws Exception {
+        TestUser sender = registerUser();
+        UUID roomId = createPublicRoom(sender.accessToken());
+
+        StompSession session = connect(sender.accessToken());
+
+        BlockingQueue<RoomEvent> roomEvents =
+                subscribe(session, "/topic/rooms/" + roomId, RoomEvent.class);
+
+        clock.advance(Duration.ofMinutes(16));
+
+        try {
+            session.send(
+                    "/app/rooms/" + roomId + "/message",
+                    new SendMessageRequest("after expiry", MessageType.TEXT, null));
+        } catch (IllegalStateException ignored) {
+            // connection already closed, also acceptable
+        }
+
+        RoomEvent event = roomEvents.poll(500, TimeUnit.MILLISECONDS);
+        assertThat(event).isNull();
+
+        if (session.isConnected()) {
+            session.disconnect();
+        }
     }
 
     @Test

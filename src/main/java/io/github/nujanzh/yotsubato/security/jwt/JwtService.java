@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
@@ -28,8 +29,9 @@ public class JwtService {
     private final RSAPublicKey publicKey;
     private final String issuer;
     private final Duration accessTokenTtl;
+    private final Clock clock;
 
-    public JwtService(JwtProperties props) {
+    public JwtService(JwtProperties props, Clock clock) {
         try {
             this.publicKey = readX509PublicKey(props.publicKey());
             this.privateKey = readPKCS8PrivateKey(props.privateKey());
@@ -38,6 +40,7 @@ public class JwtService {
         }
         this.issuer = props.issuer();
         this.accessTokenTtl = props.accessTokenTtl();
+        this.clock = clock;
     }
 
     private RSAPublicKey readX509PublicKey(Resource publicKeyResource) throws IOException {
@@ -49,7 +52,7 @@ public class JwtService {
     }
 
     public String generateAccessToken(User user) {
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         return Jwts.builder()
                 // subject = user UUID per User contract
                 .subject(user.getId().toString())
@@ -72,6 +75,7 @@ public class JwtService {
                     Jwts.parser()
                             .verifyWith(publicKey)
                             .requireIssuer(this.issuer)
+                            .clock(() -> Date.from(Instant.now(clock)))
                             .clockSkewSeconds(30)
                             .build()
                             .parseSignedClaims(token);
