@@ -174,6 +174,28 @@ class ChatStompIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void typing_asRoomMember_broadcastsTypingEvent() throws Exception {
+        TestUser sender = registerUser();
+        UUID roomId = createPublicRoom(sender.accessToken());
+
+        StompSession session = connect(sender.accessToken());
+        BlockingQueue<RoomEvent> received =
+                subscribe(session, "/topic/rooms/" + roomId, RoomEvent.class);
+
+        RoomEvent typingEvent =
+                sendUntilReceived(
+                        received,
+                        () ->
+                                session.send(
+                                        "/app/rooms/" + roomId + "/typing",
+                                        new TypingRequest(true)));
+
+        assertThat(typingEvent).isNotNull().isExactlyInstanceOf(RoomEvent.UserTypingEvent.class);
+        assertThat(((RoomEvent.UserTypingEvent) typingEvent).userId()).isEqualTo(sender.id());
+        assertThat(((RoomEvent.UserTypingEvent) typingEvent).typing()).isTrue();
+    }
+
+    @Test
     void deleteMessage_viaRest_broadcastsMessageDeletedEvent() throws Exception {
         TestUser sender = registerUser();
         UUID roomId = createPublicRoom(sender.accessToken());

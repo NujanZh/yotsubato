@@ -68,7 +68,6 @@ public class RoomOutboundAuthorizationInterceptor implements ChannelInterceptor 
 
         WebSocketSessionInfo sessionInfo = sessionInfoOptional.get();
 
-        // TODO: Maybe move into helper so both Interceptor can use it
         Instant now = Instant.now(clock);
 
         if (!now.isBefore(sessionInfo.expiresAt())) {

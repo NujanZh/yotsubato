@@ -9,16 +9,20 @@ import java.util.UUID;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = RoomEvent.MessageCreatedEvent.class, name = "MESSAGE_CREATED"),
     @JsonSubTypes.Type(value = RoomEvent.MessageEditedEvent.class, name = "MESSAGE_EDITED"),
-    @JsonSubTypes.Type(value = RoomEvent.MessageDeletedEvent.class, name = "MESSAGE_DELETED")
+    @JsonSubTypes.Type(value = RoomEvent.MessageDeletedEvent.class, name = "MESSAGE_DELETED"),
+    @JsonSubTypes.Type(value = RoomEvent.UserTypingEvent.class, name = "USER_TYPING")
 })
 public sealed interface RoomEvent
         permits RoomEvent.MessageCreatedEvent,
                 RoomEvent.MessageDeletedEvent,
-                RoomEvent.MessageEditedEvent {
+                RoomEvent.MessageEditedEvent,
+                RoomEvent.UserTypingEvent {
 
     record MessageCreatedEvent(MessageResponse message) implements RoomEvent {}
 
     record MessageEditedEvent(MessageResponse message) implements RoomEvent {}
 
     record MessageDeletedEvent(List<UUID> messageIds) implements RoomEvent {}
+
+    record UserTypingEvent(UUID userId, boolean typing) implements RoomEvent {}
 }

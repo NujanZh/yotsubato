@@ -1,10 +1,9 @@
 package io.github.nujanzh.yotsubato.web.controller;
 
-import io.github.nujanzh.yotsubato.dto.message.MessageResponse;
-import io.github.nujanzh.yotsubato.dto.message.RoomEvent;
-import io.github.nujanzh.yotsubato.dto.message.SendMessageRequest;
-import io.github.nujanzh.yotsubato.dto.message.StompError;
+import io.github.nujanzh.yotsubato.dto.message.*;
 import io.github.nujanzh.yotsubato.exception.ResourceNotFoundException;
+import io.github.nujanzh.yotsubato.exception.RoomNotFoundException;
+import io.github.nujanzh.yotsubato.repository.room.RoomMemberRepository;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.github.nujanzh.yotsubato.service.MessageService;
 import jakarta.validation.Valid;
@@ -22,10 +21,15 @@ import org.springframework.stereotype.Controller;
 public class ChatController {
 
     private final MessageService messageService;
+    private final RoomMemberRepository roomMemberRepository;
     private final SimpMessagingTemplate template;
 
-    public ChatController(MessageService messageService, SimpMessagingTemplate template) {
+    public ChatController(
+            MessageService messageService,
+            RoomMemberRepository roomMemberRepository,
+            SimpMessagingTemplate template) {
         this.messageService = messageService;
+        this.roomMemberRepository = roomMemberRepository;
         this.template = template;
     }
 
@@ -44,6 +48,24 @@ public class ChatController {
         template.convertAndSend(
                 "/topic/rooms/" + roomId,
                 new RoomEvent.MessageCreatedEvent(response.withClientMessageId(clientMessageId)));
+    }
+
+    @MessageMapping("/rooms/{roomId}/typing")
+    public void typing(
+            @DestinationVariable UUID roomId,
+            @Payload @Valid TypingRequest request,
+            Principal principal) {
+
+        AuthenticatedPrincipal user =
+                (AuthenticatedPrincipal) ((Authentication) principal).getPrincipal();
+
+        if (!roomMemberRepository.existsByRoomIdAndUserId(roomId, user.userId())) {
+            throw new RoomNotFoundException("Room not found: " + roomId);
+        }
+
+        template.convertAndSend(
+                "/topic/rooms/" + roomId,
+                new RoomEvent.UserTypingEvent(user.userId(), request.typing()));
     }
 
     @MessageExceptionHandler(ResourceNotFoundException.class)

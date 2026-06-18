@@ -13,7 +13,6 @@ public class RequestMatcherConfig {
     public RequestMatcher publicEndPoints() {
         PathPatternRequestMatcher.Builder factory = PathPatternRequestMatcher.withDefaults();
 
-        // Maybe change /actuator/ to /actuator/health/
         return new OrRequestMatcher(
                 factory.matcher("/auth/**"),
                 factory.matcher("/swagger-ui/**"),
