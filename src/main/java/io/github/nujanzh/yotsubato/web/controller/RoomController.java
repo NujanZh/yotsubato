@@ -99,7 +99,7 @@ public class RoomController {
     @PostMapping("/{roomId}/members")
     public ResponseEntity<MemberInfo> addMember(
             @PathVariable UUID roomId,
-            @RequestBody AddMemberRequest request,
+            @RequestBody @Valid AddMemberRequest request,
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         MemberInfo newMember = roomService.addMember(roomId, principal.userId(), request.userId());
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -166,7 +166,7 @@ public class RoomController {
     public ResponseEntity<MemberInfo> changeMemberRole(
             @PathVariable UUID roomId,
             @PathVariable UUID userId,
-            @RequestBody ChangeRoleRequest request,
+            @RequestBody @Valid ChangeRoleRequest request,
             @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         MemberInfo memberInfo =
                 roomService.changeRole(roomId, principal.userId(), userId, request.role());

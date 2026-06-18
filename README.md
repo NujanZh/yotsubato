@@ -16,13 +16,16 @@ design: authentication, authorization, persistence, migrations, integration test
 - Room membership management with admin/member roles
 - Join request flow for private rooms
 - Message creation over STOMP WebSocket
+- Message editing with sender-only authorization
 - Message history over REST with cursor pagination
 - Soft deletion of messages with room event broadcasts
+- Real-time typing indicators over STOMP
 - Room-scoped WebSocket authorization
 - Expired-token checks for existing WebSocket sessions
 - RFC 9457-style `ProblemDetail` error responses for REST endpoints
 - Database migrations with Flyway
 - Integration tests using Testcontainers
+- GitHub Actions CI for formatting and tests
 
 ## Tech Stack
 
@@ -96,7 +99,9 @@ Room event subscription:
 Room events currently include:
 
 - `MessageCreatedEvent`
+- `MessageEditedEvent`
 - `MessageDeletedEvent`
+- `UserTypingEvent`
 
 The WebSocket layer does more than authenticate once on connect. It also checks room membership on subscriptions,
 filters outbound room events per connected session, and rejects activity after the original JWT expires.
@@ -146,6 +151,7 @@ Messages:
 
 ```text
 GET  /api/rooms/{roomId}/messages
+PATCH /api/rooms/{roomId}/messages/{messageId}
 POST /api/rooms/{roomId}/messages/delete
 ```
 
@@ -226,7 +232,7 @@ Apply formatting:
 ```
 
 The integration tests start real dependencies with Testcontainers and cover flows such as authentication, room
-membership, join requests, REST message deletion broadcasts, and STOMP room messaging.
+membership, join requests, REST message edit/delete broadcasts, typing indicators, and STOMP room messaging.
 
 ## Security Notes
 
@@ -252,6 +258,8 @@ Implemented:
 - Room event filtering for removed members
 - Expired-token checks for WebSocket activity
 - Message history pagination
+- Message editing
 - Message soft deletion
+- Real-time typing indicators
 - Integration test coverage for main flows
-
+- GitHub Actions CI

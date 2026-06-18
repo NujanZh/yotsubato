@@ -5,6 +5,7 @@ import io.github.nujanzh.yotsubato.dto.joinrequest.RejectJoinRequest;
 import io.github.nujanzh.yotsubato.dto.member.MemberInfo;
 import io.github.nujanzh.yotsubato.security.userdetails.AuthenticatedPrincipal;
 import io.github.nujanzh.yotsubato.service.JoinRequestService;
+import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
@@ -55,7 +56,7 @@ public class JoinRequestController {
             @PathVariable UUID id,
             @PathVariable UUID reqId,
             @AuthenticationPrincipal AuthenticatedPrincipal principal,
-            @RequestBody RejectJoinRequest request) {
+            @RequestBody @Valid RejectJoinRequest request) {
         JoinRequestResponse response =
                 joinRequestService.reject(id, reqId, principal.userId(), request.reason());
 
